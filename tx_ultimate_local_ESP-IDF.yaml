@@ -9,8 +9,8 @@ substitutions:
   toggle_relay_2_on_touch: "true"
   toggle_relay_3_on_touch: "true"
 
-  vibra_time: 150ms
-  button_on_time: 200ms
+  vibra_time: "150ms"
+  button_on_time: "200ms"
 
   button_brightness: "0.6"
   button_color: "{0,0,100}"
@@ -18,8 +18,8 @@ substitutions:
   nightlight: "off"
   nightlight_brightness: "0.3"
   nightlight_color: "{100,70,50}"
-  latitude: "0°"
-  longitude: "0°"
+  # latitude: "0°"  # Set to your actual latitude in decimal degrees if using sun/time features, e.g., 45.76
+  #longitude: "0.0000"
 
   touch_brightness: "1"
   touch_color: "{100,100,100}"
@@ -50,7 +50,6 @@ substitutions:
   pa_power_pin: GPIO26
 
   led_pin: GPIO13
-#  status_led_pin: GPIO33
 
   uart_tx_pin: GPIO19
   uart_rx_pin: GPIO22
@@ -74,13 +73,14 @@ substitutions:
 
 
 
+
+# ESPHome configuration for Sonoff TX Ultimate switch with touch, LED, and media features.
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
   project:
     name: smarthomeyourself-crpl.tx_ultimate
     version: "1.0"
-
   on_boot:
     priority: -100
     then:
@@ -425,7 +425,7 @@ switch:
         - script.execute: refresh_led_default
 
   - platform: template
-    name: "Nightlight"
+    name: "Nightlight Active"
     id: nightlight_active
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
