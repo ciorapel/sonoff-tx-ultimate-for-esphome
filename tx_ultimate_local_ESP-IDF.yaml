@@ -421,7 +421,7 @@ light:
     num_leds: 28
     name: "NeoPixel Light"
     id: leds
-    default_transition_length: 0s
+    default_transition_length: 1s
     
     effects:
       - addressable_rainbow:
