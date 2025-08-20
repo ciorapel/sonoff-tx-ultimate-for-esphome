@@ -580,6 +580,17 @@ script:
     mode: restart
     then:
       - light.turn_off: leds_bottom
+      - if:
+          condition:
+            lambda: "return (id(nightlight).state || id(nightlight_active).state);"
+          then:
+            - light.turn_on:
+                id: leds_bottom
+                brightness: ${nightlight_brightness}
+                red: !lambda "return id(nightlight_color)[0]/100.0;"
+                green: !lambda "return id(nightlight_color)[1]/100.0;"
+                blue:  !lambda "return id(nightlight_color)[2]/100.0;"
+
       - delay: 10ms
       - if:
           condition:
