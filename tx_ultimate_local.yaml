@@ -716,6 +716,8 @@ script:
           green: !lambda "return id(touch_color)[1]/100.0;"
           blue:  !lambda "return id(touch_color)[2]/100.0;"
           effect: ${touch_effect}
+      - delay: 6s
+      - script.execute: refresh_led_default
 
   - id: led_on_swipe_left
     mode: restart
@@ -809,7 +811,7 @@ script:
                 else:
                   - if:
                       condition:
-                        lamamabda: "return pos <= 7;"
+                        lambda: "return pos <= 7;"
                       then:
                         - binary_sensor.template.publish:
                             id: touchfield_2
