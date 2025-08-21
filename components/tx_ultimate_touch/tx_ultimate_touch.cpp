@@ -201,8 +201,4 @@ namespace esphome
         }
 
     } // namespace tx_ultimate_touch
-<<<<<<< HEAD
 } // namespace esphome
-=======
-} // namespace esphome
->>>>>>> 5f6db66 (.bug bug bug. Reverting to original without check)
