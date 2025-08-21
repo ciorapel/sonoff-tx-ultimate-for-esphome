@@ -126,7 +126,7 @@ captive_portal:
 external_components:
   - source:
       type: git
-      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome/
+      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
       ref: main
     components: [tx_ultimate_touch]
 
@@ -449,6 +449,9 @@ light:
     effects:
       - addressable_scan:
           name: "Scan"
+          scan_width: 1
+          move_interval: 2ms
+          
       - addressable_rainbow:
           name: "Rainbow"
           speed: 10
@@ -457,10 +460,14 @@ light:
           name: "Pulse"
           transition_length: 3s
           update_interval: 1s
+          min_brightness: 30%
+          max_brightness: 100%
       - pulse:
           name: "Pulse click"
           transition_length: 0.5s
           update_interval: 0.4s
+          min_brightness: 30%
+          max_brightness: 100%
 
 media_player:
   - platform: i2s_audio
@@ -716,7 +723,7 @@ script:
           green: !lambda "return id(touch_color)[1]/100.0;"
           blue:  !lambda "return id(touch_color)[2]/100.0;"
           effect: ${touch_effect}
-      - delay: 6s
+      - delay: 10s
       - script.execute: refresh_led_default
 
   - id: led_on_swipe_left
