@@ -37,6 +37,7 @@ namespace esphome
         {
             handle_touch(buffer);
             index = 0; // Resetăm indexul pentru următorul pachet
+            continue;
         }
     }
 }
@@ -198,4 +199,5 @@ namespace esphome
 
     } // namespace tx_ultimate_touch
 } // namespace esphome
+
 
