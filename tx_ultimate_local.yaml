@@ -248,7 +248,7 @@ binary_sensor:
 switch:
   - platform: gpio
     id: relay_1
-    name: "${friendly_name} L1"
+    name: "L1"
     pin: ${relay_1_pin}
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
@@ -260,7 +260,7 @@ switch:
 
   - platform: gpio
     id: relay_2
-    name: "${friendly_name} L2"
+    name: "L2"
     internal: ${relay_2_internal}
     pin: ${relay_2_pin}
     restore_mode: RESTORE_DEFAULT_OFF
@@ -273,7 +273,7 @@ switch:
 
   - platform: gpio
     id: relay_3
-    name: "${friendly_name} L3"
+    name: "L3"
     internal: ${relay_3_internal}
     pin: ${relay_3_pin}
     restore_mode: RESTORE_DEFAULT_OFF
@@ -288,7 +288,7 @@ switch:
     id: vibra
     internal: True
     pin: ${vibra_motor_pin}
-    name: "${friendly_name} Vibration"
+    name: "Vibration"
     restore_mode: ALWAYS_OFF
     on_turn_on:
       - delay: ${vibra_time}
@@ -323,7 +323,7 @@ switch:
         - script.execute: refresh_led_default
 
   - platform: restart
-    name: "${friendly_name} Restart"
+    name: "Restart"
 
 light:
   - platform: neopixelbus
@@ -472,7 +472,7 @@ light:
 media_player:
   - platform: i2s_audio
     id: media_out
-    name: ${friendly_name} Player
+    name: Player
     dac_type: external
     i2s_dout_pin: ${audio_sdata_pin}
     i2s_audio_id: audio_i2s
