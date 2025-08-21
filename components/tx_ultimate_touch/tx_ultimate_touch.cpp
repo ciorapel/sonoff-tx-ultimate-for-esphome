@@ -198,4 +198,3 @@ namespace esphome
 
     } // namespace tx_ultimate_touch
 } // namespace esphome
-
