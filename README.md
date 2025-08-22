@@ -6,6 +6,7 @@ Modificări aduse:
 - scos complet nightlight automat folosind geolocație hardcodată
 - introdus variabile pentru ascunderea din HA a butoanelor pentru întrerupătoarele cu mai puțin de 3 poziții (știu, se putea face mai frumos, dar ... merge și așa)
 - reparat bug de toggle nightlight la fiecare restart
+
 ~~- adăugat în tx_ultimate_touch.cpp filtrare pentru coduri UART invalide~~ reverted
 - adăugat alte efecte pentru neopixel
 - pus efectul de touch jos și indicatoarele de aprindere sus (întrerupătoarele montându-se la 50 cm de podea, nu se putea vedea ce lumină e aprinsă)
@@ -28,6 +29,7 @@ Changes made:
 - completely removed automatic nightlight using hardcoded geolocation
 - introduced variables for hiding buttons for switches with less than 3 positions from HA (I know, it could have been done better, but... it works this way)
 - fixed nightlight toggle bug on every restart
+
 ~~- added filtering for invalid UART codes in tx_ultimate_touch.cpp~~ reverted
 - added other effects for neopixel
 - put the touch effect down and the light indicators up (the switches are mounted 50 cm from the floor, so you couldn't see which light was on)
