@@ -125,10 +125,14 @@ captive_portal:
 
 external_components:
   - source:
+      #type: local
+      #path: components
       type: git
-      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
+      url: https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome
       ref: main
     components: [tx_ultimate_touch]
+
+    refresh: 0s
 
 globals:
   - id: nightlight_color
