@@ -1,0 +1,26 @@
+substitutions:
+  name: intrerupator_casa_scarii_etaj
+  friendly_name: "Intrerupator casa scarii etaj"
+  relay_count: "1"
+  relay_2_internal: "true"
+  relay_3_internal: "true"
+
+packages:
+  smarthomeyourself.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@beta
+  
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+api:
+
+ota:
+ - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  
+  ap:
+    ssid: ${friendly_name} AP
+    password: "12345678"
