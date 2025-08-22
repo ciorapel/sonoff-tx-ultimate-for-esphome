@@ -589,7 +589,6 @@ script:
                 green: !lambda "return id(nightlight_color)[1]/100.0;"
                 blue:  !lambda "return id(nightlight_color)[2]/100.0;"
 
-      - delay: 10ms
       - if:
           condition:
             lambda: "return (${relay_count}>1 && id(relay_1).state) ;"
@@ -613,7 +612,7 @@ script:
             - script.execute: led_on_button_right
           else:
             - script.execute: led_off_button_right
-
+      - delay: 10ms
       - if:
           condition:
             lambda: "return (id(nightlight_active).state);"
