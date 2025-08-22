@@ -1,0 +1,13 @@
+substitutions:
+  name: intrerupator_casa_scarii_etaj
+  friendly_name: "Intrerupator casa scarii etaj"
+  relay_count: "1"
+  relay_2_internal: "true"
+  relay_3_internal: "true"
+
+packages:
+  smarthomeyourself.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
+  
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}

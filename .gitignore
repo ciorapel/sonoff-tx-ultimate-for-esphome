@@ -2,5 +2,6 @@
 .DS_Store
 .vscode/*
 secrets.yaml
-.esphome/*
 .venv/*
+.vscode/*
+.esphome/*
