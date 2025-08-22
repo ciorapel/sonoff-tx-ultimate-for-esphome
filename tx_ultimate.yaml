@@ -123,6 +123,10 @@ improv_serial:
 
 captive_portal:
 
+dashboard_import:
+  package_import_url: github://SmartHome-yourself/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
+  import_full_config: false
+
 external_components:
   - source:
       type: git

@@ -13,35 +13,37 @@ namespace esphome
         }
 
         void TxUltimateTouch::loop()
-{
-    static int buffer[15];
-    static int index = 0;
- 
-    while (this->available())
-    {
-        int byte = this->read();
- 
-        // Sincronizare: caută începutul pachetului
-        if (index == 0 && byte != 170)
-            continue;
- 
-        if (index == 1 && byte != 85) {
-            index = 0;
-            continue;
-        }
- 
-        buffer[index++] = byte;
-
-        // Când avem 15 biți, procesăm pachetul
-        if (index == 15)
         {
-            handle_touch(buffer);
-            index = 0; // Resetăm indexul pentru următorul pachet
-            continue;
+            bool found = false;
+
+            int bytes[15] = {};
+            int byte = -1;
+            int i = 0;
+
+            while (this->available())
+            {
+                byte = this->read();
+                if (byte == 170)
+                {
+                    handle_touch(bytes);
+                    i = 0;
+                }
+
+                bytes[i] = byte;
+
+                i++;
+
+                if (byte != 0)
+                {
+                    found = true;
+                }
+            };
+
+            if (found)
+            {
+                handle_touch(bytes);
+            }
         }
-        
-    }
-}
 
         void TxUltimateTouch::handle_touch(int bytes[])
         {
@@ -200,4 +202,3 @@ namespace esphome
 
     } // namespace tx_ultimate_touch
 } // namespace esphome
-
