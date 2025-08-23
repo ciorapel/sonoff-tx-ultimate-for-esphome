@@ -6,7 +6,7 @@ substitutions:
   relay_3_internal: "true"
 
 packages:
-  smarthomeyourself.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
+  smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
   
 esphome:
   name: ${name}
