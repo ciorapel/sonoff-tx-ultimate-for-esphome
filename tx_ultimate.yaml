@@ -260,6 +260,7 @@ switch:
     name: "Dummy L1"
     optimistic: true
     internal: ${relay_1_coupled}
+    restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
         - script.execute: refresh_led_default
@@ -271,7 +272,8 @@ switch:
     id: dummy_relay_2
     name: "Dummy L2"
     optimistic: true
-    internal: ${relay_2_internal}
+    internal: ${relay_2_coupled}
+    restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
         - script.execute: refresh_led_default
@@ -283,7 +285,8 @@ switch:
     id: dummy_relay_3
     name: "Dummy L3"
     optimistic: true
-    internal: ${relay_3_internal}
+    internal: ${relay_3_coupled}
+    restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
         - script.execute: refresh_led_default
@@ -628,44 +631,34 @@ script:
                 brightness: ${nightlight_brightness}
                 red: !lambda "return id(nightlight_color)[0]/100.0;"
                 green: !lambda "return id(nightlight_color)[1]/100.0;"
-                blue:  !lambda "return id(nightlight_color)[2]/100.0;"
+                blue: !lambda "return id(nightlight_color)[2]/100.0;"
 
       - if:
           condition:
-            lambda: "return (${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state);"
-
+            lambda: "return (${relay_count}>1 && (${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state));"
           then:
             - script.execute: led_on_button_left
           else:
             - script.execute: led_off_button_left
+
       - if:
           condition:
-            lambda: |
-              bool middle_on = false;
-              if (${relay_count} == 3) {
-                middle_on = ${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state;
-              } else if (${relay_count} == 1) {
-                middle_on = ${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state;
-              }
-              return middle_on;
+            lambda: "return (${relay_count}==3 && (${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state)) || (${relay_count}==1 && (${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state));"
           then:
             - script.execute: led_on_button_middle
           else:
             - script.execute: led_off_button_middle
+
       - if:
           condition:
-            lambda: |
-              bool right_on = false;
-              if (${relay_count} == 2) {
-                right_on = ${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state;
-              } else if (${relay_count} == 3) {
-                right_on = ${relay_3_coupled} ? id(relay_3).state : id(dummy_relay_3).state;
-              }
-              return right_on;
+            lambda: "return (${relay_count}==2 && (${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state)) || (${relay_count}==3 && (${relay_3_coupled} ? id(relay_3).state : id(dummy_relay_3).state));"
           then:
             - script.execute: led_on_button_right
           else:
             - script.execute: led_off_button_right
+
+      - delay: 10ms
+
       - delay: 10ms
       - if:
           condition:

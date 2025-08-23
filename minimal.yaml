@@ -8,7 +8,7 @@ substitutions:
   relay_1_coupled: "true"
   relay_2_coupled: "true"
   relay_3_coupled: "true"
-  
+
 packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
   
