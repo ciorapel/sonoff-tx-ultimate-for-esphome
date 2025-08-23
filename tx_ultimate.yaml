@@ -300,11 +300,17 @@ switch:
     pin: ${relay_1_pin}
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
-      then:
-        - script.execute: refresh_led_default
+      - if:
+          condition:
+            lambda: "return ${relay_1_coupled};"
+          then:
+            - script.execute: refresh_led_default
     on_turn_off:
-      then:
-        - script.execute: refresh_led_default
+      - if:
+          condition:
+            lambda: "return ${relay_1_coupled};"
+          then:
+            - script.execute: refresh_led_default
 
   - platform: gpio
     id: relay_2
@@ -313,11 +319,17 @@ switch:
     pin: ${relay_2_pin}
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
-      then:
-        - script.execute: refresh_led_default
+      - if:
+          condition:
+            lambda: "return ${relay_2_coupled};"
+          then:
+            - script.execute: refresh_led_default
     on_turn_off:
-      then:
-        - script.execute: refresh_led_default
+      - if:
+          condition:
+            lambda: "return ${relay_2_coupled};"
+          then:
+            - script.execute: refresh_led_default
 
   - platform: gpio
     id: relay_3
@@ -326,11 +338,17 @@ switch:
     pin: ${relay_3_pin}
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
-      then:
-        - script.execute: refresh_led_default
+      - if:
+          condition:
+            lambda: "return ${relay_3_coupled};"
+          then:
+            - script.execute: refresh_led_default
     on_turn_off:
-      then:
-        - script.execute: refresh_led_default
+      - if:
+          condition:
+            lambda: "return ${relay_3_coupled};"
+          then:
+            - script.execute: refresh_led_default
 
   - platform: gpio
     id: vibra
