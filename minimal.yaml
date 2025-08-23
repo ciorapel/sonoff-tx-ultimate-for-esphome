@@ -6,14 +6,14 @@ substitutions:
   relay_3_internal: "true"
 
 # se scoate commentul de la liniile de mai jos daca se doreste ca releul să fie permanent cuplat, și apăsarea butonului să trimită doar comandă spre HA.
-#  relay_1_pin: GPIO23
-#  toggle_relay_1_on_touch: "RESTORE_DEFAULT_ON"
+  relay_1_pin: GPIO23
+  toggle_relay_1_on_touch: RESTORE_DEFAULT_ON
 #  relay_2_pin: GPIO23
 #  toggle_relay_2_on_touch: "RESTORE_DEFAULT_ON"
 #  relay_3_pin: GPIO23
 #  toggle_relay_3_on_touch: "RESTORE_DEFAULT_ON"
 packages:
-  smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@beta
+  smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
   
 esphome:
   name: ${name}
