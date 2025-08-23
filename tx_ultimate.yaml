@@ -1,16 +1,13 @@
 substitutions:
   name: intrerupator_casa_scarii_etaj
   friendly_name: "Intrerupator casa scarii etaj"
-  relay_count: "1"
+  relay_count: "3"
   relay_2_internal: "false"
   relay_3_internal: "false"
-  relay_1_internal_real: "true"
-  relay_2_internal_real: "true"
-  relay_3_internal_real: "true"
 
-  toggle_relay_1_on_touch: "true"
-  toggle_relay_2_on_touch: "true"
-  toggle_relay_3_on_touch: "true"
+  relay_1_coupled: "true"
+  relay_2_coupled: "true"
+  relay_3_coupled: "true"
 
   vibra_time: "150ms"
   button_on_time: "200ms"
@@ -46,7 +43,6 @@ substitutions:
   relay_2_pin: GPIO17
   relay_3_pin: GPIO27
   relay_4_pin: GPIO23
-  dummy_pin: GPIO23
 
   vibra_motor_pin: GPIO21
   pa_power_pin: GPIO26
@@ -136,7 +132,7 @@ external_components:
 #      type: local
 #      path: components
 #    components: [tx_ultimate_touch]
-    refresh: 0s
+#    refresh: 0s
 
 globals:
   - id: nightlight_color
@@ -175,9 +171,11 @@ binary_sensor:
     on_press:
       - if:
           condition:
-            lambda: "return ${toggle_relay_1_on_touch};"
+            lambda: "return ${relay_1_coupled} == true;"
           then:
             - switch.toggle: relay_1
+          else:
+            - switch.toggle: dummy_relay_1
       - delay: ${button_on_time}
       - binary_sensor.template.publish:
           id: touchfield_1
@@ -186,13 +184,14 @@ binary_sensor:
   - platform: template
     name: "Touchfield 2"
     id: touchfield_2
-    internal: ${relay_2_internal}
     on_press:
       - if:
           condition:
-            lambda: "return ${toggle_relay_2_on_touch};"
+            lambda: "return ${relay_2_coupled} == true;"
           then:
             - switch.toggle: relay_2
+          else:
+            - switch.toggle: dummy_relay_2
       - delay: ${button_on_time}
       - binary_sensor.template.publish:
           id: touchfield_2
@@ -201,17 +200,19 @@ binary_sensor:
   - platform: template
     name: "Touchfield 3"
     id: touchfield_3
-    internal: ${relay_3_internal}
     on_press:
       - if:
           condition:
-            lambda: "return ${toggle_relay_3_on_touch};"
+            lambda: "return ${relay_3_coupled} == true;"
           then:
             - switch.toggle: relay_3
+          else:
+            - switch.toggle: dummy_relay_3
       - delay: ${button_on_time}
       - binary_sensor.template.publish:
           id: touchfield_3
           state: OFF
+
 
   - platform: template
     name: "Swipe left"
@@ -254,39 +255,46 @@ binary_sensor:
       - script.execute: refresh_led_default
 
 switch:
-  - platform: gpio
-    id: relay_11
-    name: "L1 real"
-    internal: ${relay_1_internal_real}
-    pin: 
-      number: GPIO18
-      allow_other_uses: true
-    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: dummy_relay_1
+    name: "Dummy L1"
+    optimistic: true
+    internal: ${relay_1_coupled}
+    on_turn_on:
+      then:
+        - script.execute: refresh_led_default
+    on_turn_off:
+      then:
+        - script.execute: refresh_led_default
 
-  - platform: gpio
-    id: relay_12
-    name: "L2 real"
-    internal: ${relay_2_internal_real}
-    pin: 
-      number: GPIO17
-      allow_other_uses: true
-    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: dummy_relay_2
+    name: "Dummy L2"
+    optimistic: true
+    internal: ${relay_2_internal}
+    on_turn_on:
+      then:
+        - script.execute: refresh_led_default
+    on_turn_off:
+      then:
+        - script.execute: refresh_led_default
 
-  - platform: gpio
-    id: relay_13
-    name: "L3 real"
-    internal: ${relay_3_internal_real}
-    pin: 
-      number: GPIO27
-      allow_other_uses: true
-    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: dummy_relay_3
+    name: "Dummy L3"
+    optimistic: true
+    internal: ${relay_3_internal}
+    on_turn_on:
+      then:
+        - script.execute: refresh_led_default
+    on_turn_off:
+      then:
+        - script.execute: refresh_led_default
 
   - platform: gpio
     id: relay_1
     name: "L1"
-    pin:
-      number: ${relay_1_pin}
-      allow_other_uses: true
+    pin: ${relay_1_pin}
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
@@ -299,9 +307,7 @@ switch:
     id: relay_2
     name: "L2"
     internal: ${relay_2_internal}
-    pin:
-      number: ${relay_2_pin}
-      allow_other_uses: true
+    pin: ${relay_2_pin}
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
@@ -314,9 +320,7 @@ switch:
     id: relay_3
     name: "L3"
     internal: ${relay_3_internal}
-    pin: 
-      number: ${relay_3_pin}
-      allow_other_uses: true
+    pin: ${relay_3_pin}
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
@@ -628,23 +632,36 @@ script:
 
       - if:
           condition:
-            lambda: "return (${relay_count}>1 && id(relay_1).state) ;"
+            lambda: "return (${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state);"
+
           then:
             - script.execute: led_on_button_left
           else:
             - script.execute: led_off_button_left
-
       - if:
           condition:
-            lambda: "return (${relay_count}==3 && id(relay_2).state) || (${relay_count}==1 && id(relay_1).state);"
+            lambda: |
+              bool middle_on = false;
+              if (${relay_count} == 3) {
+                middle_on = ${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state;
+              } else if (${relay_count} == 1) {
+                middle_on = ${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state;
+              }
+              return middle_on;
           then:
             - script.execute: led_on_button_middle
           else:
             - script.execute: led_off_button_middle
-
       - if:
           condition:
-            lambda: "return (${relay_count}==2 && id(relay_2).state) || (${relay_count}==3 && id(relay_3).state);"
+            lambda: |
+              bool right_on = false;
+              if (${relay_count} == 2) {
+                right_on = ${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state;
+              } else if (${relay_count} == 3) {
+                right_on = ${relay_3_coupled} ? id(relay_3).state : id(dummy_relay_3).state;
+              }
+              return right_on;
           then:
             - script.execute: led_on_button_right
           else:
