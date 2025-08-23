@@ -4,6 +4,9 @@ substitutions:
   relay_count: "3"
   relay_2_internal: "false"
   relay_3_internal: "false"
+  relay_1_internal_real: "true"
+  relay_2_internal_real: "true"
+  relay_3_internal_real: "true"
 
   toggle_relay_1_on_touch: "true"
   toggle_relay_2_on_touch: "true"
@@ -43,6 +46,7 @@ substitutions:
   relay_2_pin: GPIO17
   relay_3_pin: GPIO27
   relay_4_pin: GPIO23
+  dummy_pin: GPIO23
 
   vibra_motor_pin: GPIO21
   pa_power_pin: GPIO26
@@ -250,6 +254,27 @@ binary_sensor:
       - script.execute: refresh_led_default
 
 switch:
+  - platform: gpio
+    id: relay_11
+    name: "L1 real"
+   internal: ${relay_1_internal_real}
+    pin: GPIO18
+    restore_mode: RESTORE_DEFAULT_ON
+
+  - platform: gpio
+    id: relay_12
+    name: "L2 real"
+    internal: ${relay_2_internal_real}
+    pin: GPIO17
+    restore_mode: RESTORE_DEFAULT_ON
+
+  - platform: gpio
+    id: relay_13
+    name: "L3 real"
+    internal: ${relay_3_internal_real}
+    pin: GPIO27
+    restore_mode: RESTORE_DEFAULT_ON
+
   - platform: gpio
     id: relay_1
     name: "L1"

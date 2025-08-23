@@ -4,6 +4,13 @@ substitutions:
   relay_count: "1"
   relay_2_internal: "true"
   relay_3_internal: "true"
+#  relay_1_internal_real: "false"
+#  relay_1_pin: dummy_pin
+#  relay_2_internal_real: "false"
+#  relay_2_pin: dummy_pin
+#  relay_3_internal_real: "false"
+#  relay_3_pin: dummy_pin
+
 
 packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
