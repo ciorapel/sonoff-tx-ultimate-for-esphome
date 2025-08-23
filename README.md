@@ -1,8 +1,9 @@
-### Sonoff TX Ultimate custom
+# Sonoff TX Ultimate custom
 
-Bazat pe https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome
+Bazat pe <https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome>
 
 Modificări aduse:
+
 - scos complet nightlight automat folosind geolocație hardcodată
 - introdus variabile pentru ascunderea din HA a butoanelor pentru întrerupătoarele cu mai puțin de 3 poziții (știu, se putea face mai frumos, dar ... merge și așa)
 - reparat bug de toggle nightlight la fiecare restart
@@ -17,9 +18,10 @@ Modificări aduse:
 
 Există și o variantă ESP-IDF funcțională dar în lucru, care momentan are bug cu mic flicker pe neopixel când întrerupătorul are mediaplayer activ și se acționează butoanele.
 
-Pentru funcționalitatea pricipală: https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome
+Pentru funcționalitatea pricipală: <https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome>
 
 Conținut suficient pentru funcționare:
+
 ````yaml
 substitutions:
   name: nume_intrerupator
@@ -35,4 +37,3 @@ esphome:
   name: ${name}
   friendly_name: ${friendly_name}
 ````
-
