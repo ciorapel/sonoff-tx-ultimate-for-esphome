@@ -1,9 +1,9 @@
 substitutions:
   name: intrerupator_casa_scarii_etaj
   friendly_name: "Intrerupator casa scarii etaj"
-  relay_count: "1"
-  relay_2_internal: "true"
-  relay_3_internal: "true"
+  relay_count: "3"
+  relay_2_internal: "false"
+  relay_3_internal: "false"
 
   toggle_relay_1_on_touch: "true"
   toggle_relay_2_on_touch: "true"
@@ -15,7 +15,6 @@ substitutions:
   button_brightness: "0.6"
   button_color: "{0,0,100}"
 
-  nightlight: "off"
   nightlight_brightness: "0.3"
   nightlight_color: "{100,70,50}"
 
@@ -404,8 +403,8 @@ light:
     internal: true
     segments:
       - id: leds
-        from: 25
-        to: 25
+        from: 26
+        to: 26
   - platform: partition
     name: "LEDs Button middle"
     id: leds_button_middle
@@ -420,8 +419,8 @@ light:
     internal: true
     segments:
       - id: leds
-        from: 21
-        to: 21
+        from: 20
+        to: 20
 
   - platform: partition
     name: "LEDs Nightlight"
@@ -430,15 +429,15 @@ light:
     segments:
       - id: leds
         from: 0
-        to: 20
+        to: 19
       - id: leds
-        from: 22
+        from: 21
         to: 22
       - id: leds
         from: 24
-        to: 24
+        to: 25
       - id: leds
-        from: 26
+        from: 27
         to: 27
 
 
