@@ -1,6 +1,6 @@
 substitutions:
-  name: intrerupator_casa_scarii_etaj
-  friendly_name: "Intrerupator casa scarii etaj"
+  name: nume_intrerupator
+  friendly_name: "nume_intrerupator"
   relay_count: "3"
   relay_2_internal: "false"
   relay_3_internal: "false"
