@@ -17,6 +17,7 @@ Modificări aduse:
 - adăugat mod DND, când efectele de pe banda de jos și vibrația nu mai sunt executate la activarea DND
 - adăugat FAILSAFE la decoupled: la pierderea conexiunii cu HA înterupătorul devine cuplat automat la touch, chiar dacă inițial este setat în mod decuplat
 - adăugată ascunderea zonelor de touchfield în funcție de numărul de poziții ale întrerupătorului
+- nu mai este întrerupt efectul NeoPixel când se face update asupra unei entități (se apasă pe întrerupător fizic, se activează din HA, intervine nightlight etc.)
 - etc.
 
 Există și o variantă ESP-IDF funcțională dar în lucru, care momentan are bug cu mic flicker pe neopixel când întrerupătorul are mediaplayer activ și se acționează butoanele.
