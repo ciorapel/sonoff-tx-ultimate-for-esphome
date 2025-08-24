@@ -15,7 +15,6 @@ substitutions:
   button_brightness: "0.6"
   button_color: "{0,0,100}"
 
-  nightlight: "off"
   nightlight_brightness: "0.3"
   nightlight_color: "{100,70,50}"
 
