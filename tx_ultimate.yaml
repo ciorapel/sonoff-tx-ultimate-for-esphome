@@ -308,6 +308,12 @@ binary_sensor:
 
 switch:
   - platform: template
+    name: "DND"
+    id: dnd_mode
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: "mdi:cancel"
+  - platform: template
     id: dummy_relay_1
     name: "Dummy L1"
     optimistic: true
@@ -818,7 +824,9 @@ script:
     then:
       - if:
           condition:
-            lambda: "return !id(ha_neopixel_active).state;"
+            and:
+              - lambda: "return !id(ha_neopixel_active).state;"
+              - lambda: "return !id(dnd_mode).state;"
           then:
             - light.turn_on:
                 id: leds_bottom
@@ -833,46 +841,62 @@ script:
   - id: led_on_swipe_left
     mode: restart
     then:
-      - light.turn_on:
-          id: leds_bottom
-          brightness: ${swipe_left_brightness}
-          red: !lambda "return id(swipe_left_color)[0]/100.0;"
-          green: !lambda "return id(swipe_left_color)[1]/100.0;"
-          blue: !lambda "return id(swipe_left_color)[2]/100.0;"
-          effect: ${swipe_left_effect}
+      - if:
+          condition:
+            lambda: "return !id(dnd_mode).state;"
+          then:
+            - light.turn_on:
+                id: leds_bottom
+                brightness: ${swipe_left_brightness}
+                red: !lambda "return id(swipe_left_color)[0]/100.0;"
+                green: !lambda "return id(swipe_left_color)[1]/100.0;"
+                blue: !lambda "return id(swipe_left_color)[2]/100.0;"
+                effect: ${swipe_left_effect}
 
   - id: led_on_swipe_right
     mode: restart
     then:
-      - light.turn_on:
-          id: leds_bottom
-          brightness: ${swipe_right_brightness}
-          red: !lambda "return id(swipe_right_color)[0]/100.0;"
-          green: !lambda "return id(swipe_right_color)[1]/100.0;"
-          blue: !lambda "return id(swipe_right_color)[2]/100.0;"
-          effect: ${swipe_right_effect}
+      - if:
+          condition:
+            lambda: "return !id(dnd_mode).state;"
+          then:
+            - light.turn_on:
+                id: leds_bottom
+                brightness: ${swipe_right_brightness}
+                red: !lambda "return id(swipe_right_color)[0]/100.0;"
+                green: !lambda "return id(swipe_right_color)[1]/100.0;"
+                blue: !lambda "return id(swipe_right_color)[2]/100.0;"
+                effect: ${swipe_right_effect}
 
   - id: led_on_full_touch
     mode: restart
     then:
-      - light.turn_on:
-          id: leds_bottom
-          brightness: ${multi_touch_brightness}
-          red: !lambda "return id(multi_touch_color)[0]/100.0;"
-          green: !lambda "return id(multi_touch_color)[1]/100.0;"
-          blue: !lambda "return id(multi_touch_color)[2]/100.0;"
-          effect: ${multi_touch_effect}
+      - if:
+          condition:
+            lambda: "return !id(dnd_mode).state;"
+          then:
+            - light.turn_on:
+                id: leds_bottom
+                brightness: ${multi_touch_brightness}
+                red: !lambda "return id(multi_touch_color)[0]/100.0;"
+                green: !lambda "return id(multi_touch_color)[1]/100.0;"
+                blue: !lambda "return id(multi_touch_color)[2]/100.0;"
+                effect: ${multi_touch_effect}
 
   - id: led_on_long_touch
     mode: restart
     then:
-      - light.turn_on:
-          id: leds_bottom
-          brightness: ${long_press_brightness}
-          red: !lambda "return id(long_press_color)[0]/100.0;"
-          green: !lambda "return id(long_press_color)[1]/100.0;"
-          blue: !lambda "return id(long_press_color)[2]/100.0;"
-          effect: ${long_press_effect}
+      - if:
+          condition:
+            lambda: "return !id(dnd_mode).state;"
+          then:
+            - light.turn_on:
+                id: leds_bottom
+                brightness: ${long_press_brightness}
+                red: !lambda "return id(long_press_color)[0]/100.0;"
+                green: !lambda "return id(long_press_color)[1]/100.0;"
+                blue: !lambda "return id(long_press_color)[2]/100.0;"
+                effect: ${long_press_effect}
       - script.execute: refresh_led_default
 
   - id: handle_release
