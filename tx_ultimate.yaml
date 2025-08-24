@@ -199,16 +199,12 @@ binary_sensor:
     id: connection_status
     on_press:
       then:
-        - if:
-            condition:
-              lambda: "return id(ha_connection_lost);"
-            then:
-              - lambda: |-
-                  id(runtime_relay_1_coupled) = id(original_relay_1_coupled);
-                  id(runtime_relay_2_coupled) = id(original_relay_2_coupled);
-                  id(runtime_relay_3_coupled) = id(original_relay_3_coupled);
-                  id(ha_connection_lost) = false;
-              - script.execute: refresh_led_default
+        - lambda: |-
+            id(runtime_relay_1_coupled) = id(original_relay_1_coupled);
+            id(runtime_relay_2_coupled) = id(original_relay_2_coupled);
+            id(runtime_relay_3_coupled) = id(original_relay_3_coupled);
+            id(ha_connection_lost) = false;
+        - script.execute: refresh_led_default
     on_release:
       then:
         - lambda: |-
