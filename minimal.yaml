@@ -1,13 +1,13 @@
 substitutions:
-  name: intrerupator_casa_scarii_etaj
-  friendly_name: "Intrerupator casa scarii etaj"
-  relay_count: "1"
-  relay_2_internal: "true"
-  relay_3_internal: "true"
+  name: nume_intrerupator
+  friendly_name: "nume_intrerupator"
+  relay_count: "1" #numarul de poziții ale intrerupatorului
+  relay_2_internal: "true" # dacă întrerupătorul are două poziții, valoarea trebuie să fie ”false”
+  relay_3_internal: "true" # dacă întrerupătorul are trei poziții, valoarea trebuie să fie ”false”
 
-  relay_1_coupled: "true"
-  relay_2_coupled: "true"
-  relay_3_coupled: "true"
+  relay_1_coupled: "true" # funcționare normală a L1 / ”false” pentru modul decuplat
+  relay_2_coupled: "true" # funcționare normală a L2 / ”false” pentru modul decuplat
+  relay_3_coupled: "true" # funcționare normală a L3 / ”false” pentru modul decuplat
 
 packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
