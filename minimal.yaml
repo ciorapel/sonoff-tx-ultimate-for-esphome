@@ -11,7 +11,3 @@ substitutions:
 
 packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
-  
-esphome:
-  name: ${name}
-  friendly_name: ${friendly_name}
