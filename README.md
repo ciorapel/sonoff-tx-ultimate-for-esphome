@@ -11,10 +11,13 @@ Modificări aduse:
 - adăugat alte efecte pentru neopixel
 - pus efectul de touch jos și indicatoarele de aprindere sus (întrerupătoarele montându-se la 50 cm de podea, nu se putea vedea ce lumină e aprinsă)
 - modificat culori de indicare butoane, culori nightlight, intensități ale acestora etc.
-- reparat stingerea părției cu efectul la 6 secunde de la apăsare
+- reparat stingerea partiției cu efectul la 6 secunde de la apăsare
 - tranziția între efectul de apăsare și nightlight se face acum fără stingerea ledurilor
 - curățat cod de redundanțe
 - adăugat modul decuplat
+- adăugat mod DND, când efectele de pe banda de jos și vibrația nu mai sunt executate la activarea DND
+- adăugat FAILSAFE la decoupled: la pierderea conexiunii cu HA înterupătorul devine cuplat automat la touch, chiar dacă inițial este setat în mod decuplat
+- adăugată ascunderea zonelor de touchfield în funcție de numărul de poziții ale întrerupătorului
 - etc.
 
 Există și o variantă ESP-IDF funcțională dar în lucru, care momentan are bug cu mic flicker pe neopixel când întrerupătorul are mediaplayer activ și se acționează butoanele.

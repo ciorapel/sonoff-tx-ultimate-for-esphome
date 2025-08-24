@@ -241,6 +241,7 @@ binary_sensor:
   - platform: template
     name: "Touchfield 2"
     id: touchfield_2
+    internal: ${relay_2_internal}
     on_press:
       - if:
           condition:
@@ -257,6 +258,7 @@ binary_sensor:
   - platform: template
     name: "Touchfield 3"
     id: touchfield_3
+    internal: ${relay_3_internal}
     on_press:
       - if:
           condition:
@@ -619,7 +621,11 @@ tx_ultimate_touch:
   uart: my_uart
 
   on_press:
-    - switch.turn_on: vibra
+    - if:
+        condition:
+          lambda: "return !id(dnd_mode).state;"
+        then:
+          - switch.turn_on: vibra
     - script.execute: led_on_touch
     - lambda: >
         ESP_LOGD("tx_ultimate_touch.on_press", "Touch Position: %d / State: %d", touch.x, touch.state);
@@ -634,7 +640,11 @@ tx_ultimate_touch:
   on_swipe_left:
     - script.execute: led_on_swipe_left
 
-    - switch.turn_on: vibra
+    - if:
+        condition:
+          lambda: "return !id(dnd_mode).state;"
+        then:
+          - switch.turn_on: vibra
 
     - binary_sensor.template.publish:
         id: swipe_left
@@ -644,7 +654,11 @@ tx_ultimate_touch:
 
   on_swipe_right:
     - script.execute: led_on_swipe_right
-    - switch.turn_on: vibra
+    - if:
+        condition:
+          lambda: "return !id(dnd_mode).state;"
+        then:
+          - switch.turn_on: vibra
     - binary_sensor.template.publish:
         id: swipe_right
         state: ON
@@ -653,7 +667,11 @@ tx_ultimate_touch:
 
   on_full_touch_release:
     - script.execute: led_on_full_touch
-    - switch.turn_on: vibra
+    - if:
+        condition:
+          lambda: "return !id(dnd_mode).state;"
+        then:
+          - switch.turn_on: vibra
     - binary_sensor.template.publish:
         id: multi_touch
         state: ON
@@ -663,7 +681,11 @@ tx_ultimate_touch:
   on_long_touch_release:
     - script.execute: led_on_long_touch
 
-    - switch.turn_on: vibra
+    - if:
+        condition:
+          lambda: "return !id(dnd_mode).state;"
+        then:
+          - switch.turn_on: vibra
 
     - binary_sensor.template.publish:
         id: long_press
