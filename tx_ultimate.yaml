@@ -1,7 +1,7 @@
 substitutions:
   name: nume_intrerupator
   friendly_name: "nume_intrerupator"
-  relay_count: "3"
+  relay_count: "1"
   relay_2_internal: "false"
   relay_3_internal: "false"
 
@@ -43,6 +43,8 @@ substitutions:
   relay_2_pin: GPIO17
   relay_3_pin: GPIO27
   relay_4_pin: GPIO23
+
+  neopixel_light_id: light.${name}_neopixel_light
 
   vibra_motor_pin: GPIO21
   pa_power_pin: GPIO26
@@ -165,6 +167,10 @@ globals:
     initial_value: ${touch_color}
 
 binary_sensor:
+  - platform: homeassistant
+    id: ha_neopixel_active
+    entity_id: ${neopixel_light_id} #light.${friendly_name}_neopixel_light
+    internal: true
   - platform: template
     name: "Touchfield 1"
     id: touchfield_1
@@ -639,52 +645,59 @@ script:
   - id: refresh_led_default
     mode: restart
     then:
-      - light.turn_off: leds_bottom
       - if:
           condition:
-            lambda: "return (id(nightlight_active).state);"
+            lambda: |-
+              return !id(ha_neopixel_active).state;  // rulează doar dacă NeoPixel Light este OFF
           then:
-            - light.turn_on:
-                id: leds_bottom
-                brightness: ${nightlight_brightness}
-                red: !lambda "return id(nightlight_color)[0]/100.0;"
-                green: !lambda "return id(nightlight_color)[1]/100.0;"
-                blue: !lambda "return id(nightlight_color)[2]/100.0;"
+            - light.turn_off: leds_bottom
+            - if:
+                condition:
+                  lambda: "return (id(nightlight_active).state);"
+                then:
+                  - light.turn_on:
+                      id: leds_bottom
+                      brightness: ${nightlight_brightness}
+                      red: !lambda "return id(nightlight_color)[0]/100.0;"
+                      green: !lambda "return id(nightlight_color)[1]/100.0;"
+                      blue: !lambda "return id(nightlight_color)[2]/100.0;"
 
-      - if:
-          condition:
-            lambda: "return (${relay_count}>1 && (${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state));"
-          then:
-            - script.execute: led_on_button_left
+            - if:
+                condition:
+                  lambda: "return (${relay_count}>1 && (${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state));"
+                then:
+                  - script.execute: led_on_button_left
+                else:
+                  - script.execute: led_off_button_left
+
+            - if:
+                condition:
+                  lambda: "return (${relay_count}==3 && (${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state)) || (${relay_count}==1 && (${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state));"
+                then:
+                  - script.execute: led_on_button_middle
+                else:
+                  - script.execute: led_off_button_middle
+
+            - if:
+                condition:
+                  lambda: "return (${relay_count}==2 && (${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state)) || (${relay_count}==3 && (${relay_3_coupled} ? id(relay_3).state : id(dummy_relay_3).state));"
+                then:
+                  - script.execute: led_on_button_right
+                else:
+                  - script.execute: led_off_button_right
+
+            - delay: 10ms
+
+            - delay: 10ms
+            - if:
+                condition:
+                  lambda: "return (id(nightlight_active).state);"
+                then:
+                  - script.execute: led_on_nightlight
+                else:
+                  - light.turn_off: leds_nightlight
           else:
-            - script.execute: led_off_button_left
-
-      - if:
-          condition:
-            lambda: "return (${relay_count}==3 && (${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state)) || (${relay_count}==1 && (${relay_1_coupled} ? id(relay_1).state : id(dummy_relay_1).state));"
-          then:
-            - script.execute: led_on_button_middle
-          else:
-            - script.execute: led_off_button_middle
-
-      - if:
-          condition:
-            lambda: "return (${relay_count}==2 && (${relay_2_coupled} ? id(relay_2).state : id(dummy_relay_2).state)) || (${relay_count}==3 && (${relay_3_coupled} ? id(relay_3).state : id(dummy_relay_3).state));"
-          then:
-            - script.execute: led_on_button_right
-          else:
-            - script.execute: led_off_button_right
-
-      - delay: 10ms
-
-      - delay: 10ms
-      - if:
-          condition:
-            lambda: "return (id(nightlight_active).state);"
-          then:
-            - script.execute: led_on_nightlight
-          else:
-            - light.turn_off: leds_nightlight
+            - logger.log: "Neopixel Light activ → refresh_led_default ignorat"
 
   - id: led_on_button_left
     mode: restart
