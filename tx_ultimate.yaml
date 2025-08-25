@@ -1,6 +1,6 @@
 substitutions:
   name: nume_intrerupator
-  friendly_name: "nume_intrerupator"
+  friendly_name: "Nume intrerupator"
   relay_count: "3"
   relay_2_internal: "false"
   relay_3_internal: "false"
@@ -135,6 +135,9 @@ external_components:
 #    components: [tx_ultimate_touch]
 #    refresh: 0s
 
+preferences:
+  flash_write_interval: 5min
+
 globals:
   - id: nightlight_color
     type: int [3]
@@ -166,31 +169,30 @@ globals:
     initial_value: ${touch_color}
   - id: original_relay_1_coupled
     type: bool
-    restore_value: yes
+    restore_value: no
     initial_value: ${relay_1_coupled}
   - id: original_relay_2_coupled
     type: bool
-    restore_value: yes
+    restore_value: no
     initial_value: ${relay_2_coupled}
   - id: original_relay_3_coupled
     type: bool
-    restore_value: yes
+    restore_value: no
     initial_value: ${relay_3_coupled}
   - id: runtime_relay_1_coupled
     type: bool
-    restore_value: yes
     initial_value: ${relay_1_coupled}
   - id: runtime_relay_2_coupled
     type: bool
-    restore_value: yes
+    restore_value: no
     initial_value: ${relay_2_coupled}
   - id: runtime_relay_3_coupled
     type: bool
-    restore_value: yes
+    restore_value: no
     initial_value: ${relay_3_coupled}
   - id: ha_connection_lost
     type: bool
-    restore_value: yes
+    restore_value: no
     initial_value: "false"
 
 binary_sensor:

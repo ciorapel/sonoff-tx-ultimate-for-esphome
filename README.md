@@ -8,9 +8,9 @@ Modificări aduse:
 - introdus variabile pentru ascunderea din HA a butoanelor pentru întrerupătoarele cu mai puțin de 3 poziții (știu, se putea face mai frumos, dar ... merge și așa)
 - reparat bug de toggle nightlight la fiecare restart
 - adăugat alte efecte pentru neopixel
-- pus efectul de touch jos și indicatoarele de aprindere sus (întrerupătoarele montându-se la 50 cm de podea, nu se putea vedea ce lumină e aprinsă)
+- pus efectul de touch jos și indicatoarele de aprindere sus
 - modificat culori de indicare butoane, culori nightlight, intensități ale acestora etc.
-- reparat stingerea partiției cu efectul la 6 secunde de la apăsare
+- reparat stingerea partiției cu efectul de touch la 6 secunde de la apăsare
 - tranziția între efectul de apăsare și nightlight se face acum fără stingerea ledurilor
 - curățat cod de redundanțe
 - adăugat modul decuplat
