@@ -1,9 +1,9 @@
 substitutions:
-  name: nume_intrerupator
-  friendly_name: "Nume intrerupator"
-  relay_count: "3"
+  name: intrerupator_cap_pat_dan
+  friendly_name: "Intrerupator cap pat Dan"
+  relay_count: "2" #numarul de poziții ale intrerupatorului
   relay_2_internal: "false"
-  relay_3_internal: "false"
+  relay_3_internal: "true"
 
   relay_1_coupled: "true"
   relay_2_coupled: "true"
@@ -105,7 +105,7 @@ logger:
     light: INFO
     script: INFO
     switch: INFO
-    tx_ultimate_touch: INFO
+    tx_ultimate_touch: DEBUG
     uart_debug: INFO
 
 api:
@@ -125,15 +125,16 @@ improv_serial:
 captive_portal:
 
 external_components:
-  - source:
-      type: git
-      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
-      ref: main
-    components: [tx_ultimate_touch]
-#      type: local
-#      path: components
+#  - source:
+#      type: git
+#      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
+#      ref: main
 #    components: [tx_ultimate_touch]
-#    refresh: 0s
+  - source:
+      type: local
+      path: components
+    components: [tx_ultimate_touch]
+    refresh: 0s
 
 preferences:
   flash_write_interval: 5min
@@ -194,6 +195,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: "false"
+  - id: multitouch_action_turn_on
+    type: bool
+    restore_value: no
+    initial_value: "true"
 
 binary_sensor:
   - platform: status
@@ -513,8 +518,8 @@ light:
     internal: true
     segments:
       - id: leds
-        from: 26
-        to: 26
+        from: 25
+        to: 25
   - platform: partition
     name: "LEDs Button middle"
     id: leds_button_middle
@@ -529,8 +534,8 @@ light:
     internal: true
     segments:
       - id: leds
-        from: 20
-        to: 20
+        from: 21
+        to: 21
 
   - platform: partition
     name: "LEDs Nightlight"
@@ -539,15 +544,15 @@ light:
     segments:
       - id: leds
         from: 0
-        to: 19
+        to: 20
       - id: leds
-        from: 21
+        from: 22
         to: 22
       - id: leds
         from: 24
-        to: 25
+        to: 24
       - id: leds
-        from: 27
+        from: 26
         to: 27
 
   - platform: partition
@@ -672,6 +677,127 @@ tx_ultimate_touch:
     - binary_sensor.template.publish:
         id: multi_touch
         state: ON
+    
+    # LOGICA NOUĂ pentru controlul releelor non-interne
+    - lambda: |-
+        // Determină care releuri sunt active și non-interne
+        std::vector<bool> relay_states;
+        std::vector<std::string> relay_names;
+        
+        // Verifică releu 1 (întotdeauna non-internal)
+        bool relay1_state = id(runtime_relay_1_coupled) ? id(relay_1).state : id(dummy_relay_1).state;
+        relay_states.push_back(relay1_state);
+        relay_names.push_back("relay_1");
+        
+        // Verifică releu 2 doar dacă nu e internal
+        if (${relay_count} >= 2 && !${relay_2_internal}) {
+          bool relay2_state = id(runtime_relay_2_coupled) ? id(relay_2).state : id(dummy_relay_2).state;
+          relay_states.push_back(relay2_state);
+          relay_names.push_back("relay_2");
+        }
+        
+        // Verifică releu 3 doar dacă nu e internal  
+        if (${relay_count} >= 3 && !${relay_3_internal}) {
+          bool relay3_state = id(runtime_relay_3_coupled) ? id(relay_3).state : id(dummy_relay_3).state;
+          relay_states.push_back(relay3_state);
+          relay_names.push_back("relay_3");
+        }
+        
+        // Verifică dacă toate releele non-interne sunt ON
+        bool all_on = true;
+        bool any_on = false;
+        
+        for (bool state : relay_states) {
+          if (!state) all_on = false;
+          if (state) any_on = true;
+        }
+        
+        ESP_LOGD("multitouch", "Found %d non-internal relays, all_on: %d, any_on: %d", 
+                 relay_states.size(), all_on, any_on);
+        
+        // Setează acțiunea: dacă toate sunt ON -> stinge toate, altfel -> aprinde toate
+        id(multitouch_action_turn_on) = !all_on;
+        
+    - if:
+        condition:
+          lambda: "return id(multitouch_action_turn_on);"
+        then:
+          # APRINDE toate releele non-interne
+          - logger.log: "MultiTouch: Aprind toate releele non-interne"
+          
+          # Releu 1 (întotdeauna non-internal)
+          - if:
+              condition:
+                lambda: "return id(runtime_relay_1_coupled);"
+              then:
+                - switch.turn_on: relay_1
+              else:
+                - switch.turn_on: dummy_relay_1
+          
+          # Releu 2 (doar dacă nu e internal)
+          - if:
+              condition:
+                lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
+              then:
+                - if:
+                    condition:
+                      lambda: "return id(runtime_relay_2_coupled);"
+                    then:
+                      - switch.turn_on: relay_2
+                    else:
+                      - switch.turn_on: dummy_relay_2
+          
+          # Releu 3 (doar dacă nu e internal)
+          - if:
+              condition:
+                lambda: "return ${relay_count} >= 3 && !${relay_3_internal};"
+              then:
+                - if:
+                    condition:
+                      lambda: "return id(runtime_relay_3_coupled);"
+                    then:
+                      - switch.turn_on: relay_3
+                    else:
+                      - switch.turn_on: dummy_relay_3
+        else:
+          # STINGE toate releele non-interne
+          - logger.log: "MultiTouch: Sting toate releele non-interne"
+          
+          # Releu 1 (întotdeauna non-internal)
+          - if:
+              condition:
+                lambda: "return id(runtime_relay_1_coupled);"
+              then:
+                - switch.turn_off: relay_1
+              else:
+                - switch.turn_off: dummy_relay_1
+          
+          # Releu 2 (doar dacă nu e internal)
+          - if:
+              condition:
+                lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
+              then:
+                - if:
+                    condition:
+                      lambda: "return id(runtime_relay_2_coupled);"
+                    then:
+                      - switch.turn_off: relay_2
+                    else:
+                      - switch.turn_off: dummy_relay_2
+          
+          # Releu 3 (doar dacă nu e internal)
+          - if:
+              condition:
+                lambda: "return ${relay_count} >= 3 && !${relay_3_internal};"
+              then:
+                - if:
+                    condition:
+                      lambda: "return id(runtime_relay_3_coupled);"
+                    then:
+                      - switch.turn_off: relay_3
+                    else:
+                      - switch.turn_off: dummy_relay_3
+
     - lambda: >
         ESP_LOGD("tx_ultimate_touch.on_full_touch_release", "Full Touch Release Position: %d / State: %d", touch.x, touch.state);
 
@@ -687,6 +813,7 @@ tx_ultimate_touch:
     - binary_sensor.template.publish:
         id: long_press
         state: ON
+    - switch.toggle: nightlight_active
 
     - lambda: >
         ESP_LOGD("tx_ultimate_touch.on_long_touch_release", "Long Touch Release Position: %d / State: %d", touch.x, touch.state);

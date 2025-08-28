@@ -14,34 +14,77 @@ namespace esphome
 
         void TxUltimateTouch::loop()
         {
+            static int bytes[15] = {};
+            static int i = 0;
+            static unsigned long last_activity = 0;
+            static bool packet_started = false;
+            
             bool found = false;
-
-            int bytes[15] = {};
             int byte = -1;
-            int i = 0;
+            
+            unsigned long current_time = millis();
 
             while (this->available())
             {
                 byte = this->read();
-                if (byte == 170)
+                last_activity = current_time;
+                
+                // Detectează începutul unui pachet nou
+                if (byte == 170) // 0xAA
                 {
-                    handle_touch(bytes);
+                    // Dacă aveam deja un pachet în curs, procesează-l
+                    if (packet_started && i > 4)
+                    {
+                        handle_touch(bytes);
+                    }
+                    
+                    // Resetează pentru noul pachet
+                    memset(bytes, 0, sizeof(bytes));
                     i = 0;
+                    packet_started = true;
                 }
 
-                bytes[i] = byte;
-
-                i++;
+                if (packet_started && i < 15)
+                {
+                    bytes[i] = byte;
+                    i++;
+                    
+                    // Verifică dacă avem un pachet complet (15 bytes)
+                    if (i >= 15)
+                    {
+                        handle_touch(bytes);
+                        packet_started = false;
+                        i = 0;
+                        found = true;
+                    }
+                }
 
                 if (byte != 0)
                 {
                     found = true;
                 }
-            };
+            }
 
-            if (found)
+            // Timeout pentru pachete incomplete - dacă nu am primit date de 100ms
+            // și avem un pachet parțial, consideră-l invalid
+            if (packet_started && (current_time - last_activity > 100) && i > 0)
             {
-                handle_touch(bytes);
+                ESP_LOGW(TAG, "Packet timeout - discarding incomplete packet (i=%d)", i);
+                packet_started = false;
+                i = 0;
+                memset(bytes, 0, sizeof(bytes));
+            }
+
+            // Procesează ultimul pachet doar dacă este complet și valid
+            if (found && packet_started && i >= 4)
+            {
+                // Verifică dacă pare a fi un pachet valid înainte de procesare
+                if (bytes[0] == 170 && bytes[1] == 85 && bytes[2] == 1 && bytes[3] == 2)
+                {
+                    handle_touch(bytes);
+                    packet_started = false;
+                    i = 0;
+                }
             }
         }
 
@@ -57,6 +100,10 @@ namespace esphome
             {
                 send_touch_(get_touch_point(bytes));
             }
+            else
+            {
+                ESP_LOGW(TAG, "Invalid touch data received");
+            }
         }
 
         void TxUltimateTouch::dump_config()
@@ -66,6 +113,26 @@ namespace esphome
 
         void TxUltimateTouch::send_touch_(TouchPoint tp)
         {
+            // Adaugă debouncing pentru a evita evenimente duplicate rapide
+            static unsigned long last_event_time = 0;
+            static int last_event_state = -1;
+            static int last_event_x = -1;
+            
+            unsigned long current_time = millis();
+            
+            // Ignore duplicate events within 50ms
+            if (current_time - last_event_time < 50 && 
+                tp.state == last_event_state && 
+                tp.x == last_event_x)
+            {
+                ESP_LOGV(TAG, "Debouncing duplicate event");
+                return;
+            }
+            
+            last_event_time = current_time;
+            last_event_state = tp.state;
+            last_event_x = tp.x;
+
             switch (tp.state)
             {
             case TOUCH_STATE_RELEASE:
@@ -103,16 +170,17 @@ namespace esphome
                 break;
 
             default:
+                ESP_LOGW(TAG, "Unknown touch state: %d", tp.state);
                 break;
             }
         }
 
         bool TxUltimateTouch::is_valid_data(int bytes[])
         {
-            bool valid = true;
-
+            // Verifică header-ul pachetului
             if (!(bytes[0] == 170 && bytes[1] == 85 && bytes[2] == 1 && bytes[3] == 2))
             {
+                ESP_LOGV(TAG, "Invalid packet header: %d %d %d %d", bytes[0], bytes[1], bytes[2], bytes[3]);
                 return false;
             }
 
@@ -123,11 +191,14 @@ namespace esphome
                 state != TOUCH_STATE_SWIPE_RIGHT &&
                 state != TOUCH_STATE_ALL_FIELDS)
             {
+                ESP_LOGV(TAG, "Invalid touch state: %d", state);
                 return false;
             }
 
+            // Pentru starea ALL_FIELDS, poziția poate fi diferită
             if (bytes[6] < 0 && state != TOUCH_STATE_ALL_FIELDS)
             {
+                ESP_LOGV(TAG, "Invalid position data: %d for state %d", bytes[6], state);
                 return false;
             }
 
