@@ -21,6 +21,7 @@ Modificări aduse:
 - multitouch: dacă toate butoanele sunt active, le dezactivează pe toate; dacă e un buton neactivat, îl activează (multitouch se asigură că sunt toate butoanele aprinse, și dacă sunt toate aprinse, le stinge)
 - long touch face toggle la nightlight
 - ajustat pe cât posibil C în tentativa de scăpat de bug-ul care apare la apăsări extrem de scurte, unde nu se mai trimite release-ul.
+- adaugat modalitate de dezactivare vibrație, separat de DND.
 - etc.
 
 Există și o variantă ESP-IDF funcțională dar în lucru, care momentan are bug cu mic flicker pe neopixel când întrerupătorul are mediaplayer activ și se acționează butoanele.

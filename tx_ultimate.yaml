@@ -49,8 +49,7 @@ substitutions:
   pa_power_pin: GPIO26
 
   led_pin: GPIO13
-  status_led_pin: GPIO33
-
+ 
   uart_tx_pin: GPIO19
   uart_rx_pin: GPIO22
 
@@ -105,7 +104,7 @@ logger:
     light: INFO
     script: INFO
     switch: INFO
-    tx_ultimate_touch: DEBUG
+    tx_ultimate_touch: INFO
     uart_debug: INFO
 
 api:
@@ -314,6 +313,12 @@ switch:
   - platform: template
     name: "DND"
     id: dnd_mode
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: "mdi:cancel"
+  - platform: template
+    name: "Vibration"
+    id: no_vibra
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     icon: "mdi:cancel"
@@ -567,7 +572,7 @@ light:
       - addressable_scan:
           name: "Scan"
           scan_width: 1
-          move_interval: 2ms
+          move_interval: 20ms
 
       - addressable_rainbow:
           name: "Rainbow"
@@ -625,7 +630,8 @@ tx_ultimate_touch:
   on_press:
     - if:
         condition:
-          lambda: "return !id(dnd_mode).state;"
+          lambda: |-
+            return !id(dnd_mode).state && id(no_vibra).state;
         then:
           - switch.turn_on: vibra
     - script.execute: led_on_touch
@@ -644,7 +650,8 @@ tx_ultimate_touch:
 
     - if:
         condition:
-          lambda: "return !id(dnd_mode).state;"
+          lambda: |-
+            return !id(dnd_mode).state && id(no_vibra).state;
         then:
           - switch.turn_on: vibra
 
@@ -658,7 +665,8 @@ tx_ultimate_touch:
     - script.execute: led_on_swipe_right
     - if:
         condition:
-          lambda: "return !id(dnd_mode).state;"
+          lambda: |-
+            return !id(dnd_mode).state && id(no_vibra).state;
         then:
           - switch.turn_on: vibra
     - binary_sensor.template.publish:
@@ -671,7 +679,8 @@ tx_ultimate_touch:
     - script.execute: led_on_full_touch
     - if:
         condition:
-          lambda: "return !id(dnd_mode).state;"
+          lambda: |-
+            return !id(dnd_mode).state && id(no_vibra).state;
         then:
           - switch.turn_on: vibra
     - binary_sensor.template.publish:
@@ -738,6 +747,7 @@ tx_ultimate_touch:
           - if:
               condition:
                 lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
+
               then:
                 - if:
                     condition:
@@ -776,6 +786,7 @@ tx_ultimate_touch:
           - if:
               condition:
                 lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
+
               then:
                 - if:
                     condition:
@@ -806,7 +817,8 @@ tx_ultimate_touch:
 
     - if:
         condition:
-          lambda: "return !id(dnd_mode).state;"
+          lambda: |-
+            return !id(dnd_mode).state && id(no_vibra).state;
         then:
           - switch.turn_on: vibra
 
