@@ -1,7 +1,7 @@
 substitutions:
-  name: intrerupator_default
-  friendly_name: "Intrerupator Default"
-  relay_count: "2"
+  name: intrerupator_cap_pat_dan
+  friendly_name: "Intrerupator cap pat Dan"
+  relay_count: "2" #numarul de poziții ale intrerupatorului
   relay_2_internal: "false"
   relay_3_internal: "true"
 
@@ -12,10 +12,8 @@ substitutions:
   vibra_time: "150ms"
   button_on_time: "200ms"
 
-  button_brightness_default: "0.4"
-  button_color_default: "{100,100,100}"
-  button_brightness_nightlight: "0.7"
-  button_color_nightlight: "{100,80,60}"
+  button_brightness: "0.6"
+  button_color: "{0,0,100}"
 
   nightlight_brightness: "0.3"
   nightlight_color: "{100,70,50}"
@@ -55,12 +53,11 @@ substitutions:
   uart_tx_pin: GPIO19
   uart_rx_pin: GPIO22
 
-  touchpanel_power_pin: GPIO5
+  audio_lrclk_pin: GPIO4
+  audio_bclk_pin: GPIO2
+  audio_sdata_pin: GPIO15
 
-i2s_audio:
-  - id: if_i2s_audio
-    i2s_bclk_pin: GPIO2
-    i2s_lrclk_pin: GPIO4
+  touchpanel_power_pin: GPIO5
 
 esphome:
   name: ${name}
@@ -98,18 +95,17 @@ esphome:
 esp32:
   board: esp32dev
   framework:
-    type: esp-idf
+    type: arduino
 
 logger:
-  level: INFO
+  level: DEBUG
   logs:
-    binary_sensor: WARN
-    light: WARN
-    script: WARN
-    switch: WARN
+    binary_sensor: INFO
+    light: INFO
+    script: INFO
+    switch: INFO
     tx_ultimate_touch: INFO
-    uart_debug: WARN
-    media_player: INFO
+    uart_debug: INFO
 
 api:
 
@@ -119,9 +115,6 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  fast_connect: true
-  power_save_mode: none
-  reboot_timeout: 15min
 
   ap:
     password: "123456789"
@@ -131,37 +124,29 @@ improv_serial:
 captive_portal:
 
 external_components:
-  - source:
-      type: git
-      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
-      ref: main
-    components: [tx_ultimate_touch]
 #  - source:
-#      type: local
-#      path: components
+#      type: git
+#      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
+#      ref: main
 #    components: [tx_ultimate_touch]
-#    refresh: 0s
+  - source:
+      type: local
+      path: components
+    components: [tx_ultimate_touch]
+    refresh: 0s
 
 preferences:
-  flash_write_interval: 15min
+  flash_write_interval: 5min
 
 globals:
-  - id: button_brightness
-    type: float
-    restore_value: no
-    initial_value: ${button_brightness_default}
-  - id: button_color
-    type: int[3]
-    restore_value: no
-    initial_value: ${button_color_default}
   - id: nightlight_color
     type: int [3]
     restore_value: no
     initial_value: ${nightlight_color}
-#  - id: button_color
-#    type: int [3]
-#    restore_value: no
-#    initial_value: ${button_color}
+  - id: button_color
+    type: int [3]
+    restore_value: no
+    initial_value: ${button_color}
   - id: long_press_color
     type: int [3]
     restore_value: no
@@ -197,7 +182,6 @@ globals:
   - id: runtime_relay_1_coupled
     type: bool
     initial_value: ${relay_1_coupled}
-    restore_value: no  
   - id: runtime_relay_2_coupled
     type: bool
     restore_value: no
@@ -326,27 +310,18 @@ binary_sensor:
       - script.execute: refresh_led_default
 
 switch:
-  - id: sw_audio_amplifier
-    name: Audio Amplifier
-    platform: gpio
-    pin:
-      number: GPIO26
-      inverted: false
-    restore_mode: ALWAYS_ON
-    internal: true
-    entity_category: config
   - platform: template
     name: "DND"
     id: dnd_mode
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: "mdi:weather-night"
+    icon: "mdi:cancel"
   - platform: template
     name: "Vibration"
     id: no_vibra
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: "mdi:vibrate"
+    icon: "mdi:cancel"
   - platform: template
     id: dummy_relay_1
     name: "Dummy L1"
@@ -446,6 +421,12 @@ switch:
       - delay: ${vibra_time}
       - switch.turn_off: vibra
   - platform: gpio
+    id: pa_power
+    pin: ${pa_power_pin}
+    name: "PA Power"
+    internal: true
+    restore_mode: ALWAYS_ON
+  - platform: gpio
     name: "touch panel power"
     pin:
       number: ${touchpanel_power_pin}
@@ -460,74 +441,22 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
-        - script.execute: update_button_settings
         - script.execute: refresh_led_default
     on_turn_off:
       then:
-        - script.execute: update_button_settings
         - script.execute: refresh_led_default
   - platform: restart
     name: "Restart"
 
-speaker:
-  - id: speaker_embedded
-    platform: i2s_audio
-    dac_type: external
-    i2s_dout_pin: GPIO15
-    i2s_audio_id: if_i2s_audio
-    i2s_comm_fmt: stand_msb
-    channel: mono
-    timeout: never
-    bits_per_sample: 16bit
-    sample_rate: 24000
-    buffer_duration: 250ms
-  - platform: mixer
-    id: mixer_speaker_embedded
-    output_speaker: speaker_embedded
-    source_speakers:
-      - id: announcement_speaker_embedded
-      - id: media_speaker_embedded
-  - platform: resampler
-    id: announcement_spk_resampling_input
-    output_speaker: announcement_speaker_embedded
-  - platform: resampler
-    id: media_spk_resampling_input
-    output_speaker: media_speaker_embedded
-
-
-media_player:
-  - id: mp_media_player
-    name: Media Player
-    internal: false
-    platform: speaker
-    codec_support_enabled: true
-    buffer_size: 100000
-    task_stack_in_psram: true
-    announcement_pipeline:
-      speaker: announcement_spk_resampling_input
-      format: WAV
-      num_channels: 1
-      sample_rate: 24000
-    media_pipeline:
-      speaker: media_spk_resampling_input
-      format: FLAC
-      num_channels: 1
-      sample_rate: 24000
-
-button:
-  - platform: factory_reset
-    name: "Factory Reset (NVS)"
-
 light:
-  - platform: esp32_rmt_led_strip
-    rgb_order: GRB
-    chipset: ws2812
-    max_refresh_rate: 33ms
-    use_psram: false
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2811
     pin: ${led_pin}
     num_leds: 28
     name: "NeoPixel Light"
     id: leds
+    default_transition_length: 1s
     effects:
       - addressable_rainbow:
           name: "Rainbow"
@@ -662,6 +591,21 @@ light:
           min_brightness: 30%
           max_brightness: 100%
 
+media_player:
+  - platform: i2s_audio
+    id: media_out
+    name: Player
+    dac_type: external
+    i2s_dout_pin: ${audio_sdata_pin}
+    i2s_audio_id: audio_i2s
+    i2s_comm_fmt: lsb
+    mode: mono
+
+i2s_audio:
+  id: audio_i2s
+  i2s_lrclk_pin: ${audio_lrclk_pin}
+  i2s_bclk_pin: ${audio_bclk_pin}
+
 uart:
   tx_pin: ${uart_tx_pin}
   rx_pin: ${uart_rx_pin}
@@ -674,13 +618,10 @@ uart:
     direction: RX
     dummy_receiver: false
     after:
-      timeout: 1s
-      bytes: 1024
+      timeout: 2s
+      bytes: 2048
     sequence:
-      - lambda: |-
-          if (bytes.size() > 0) {
-            UARTDebug::log_hex(direction, bytes, ' ');
-          }
+      - lambda: UARTDebug::log_hex(direction, bytes, ' ');
 
 tx_ultimate_touch:
   id: tx_touch
@@ -890,24 +831,8 @@ tx_ultimate_touch:
         ESP_LOGD("tx_ultimate_touch.on_long_touch_release", "Long Touch Release Position: %d / State: %d", touch.x, touch.state);
 
 script:
-  - id: update_button_settings
-    mode: single
-    then:
-      - if:
-          condition:
-            lambda: "return id(nightlight_active).state;"
-          then:
-            - lambda: |-
-                id(button_brightness) = ${button_brightness_nightlight};
-                int nightlight[3] = ${button_color_nightlight};
-                for (int i = 0; i < 3; i++) id(button_color)[i] = nightlight[i];
-          else:
-            - lambda: |-
-                id(button_brightness) = ${button_brightness_default};
-                int def[3] = ${button_color_default};
-                for (int i = 0; i < 3; i++) id(button_color)[i] = def[i];
   - id: refresh_led_default
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -915,7 +840,6 @@ script:
               return !id(ha_neopixel_active).state;
           then:
             - light.turn_off: leds_bottom
-
             - if:
                 condition:
                   lambda: "return (id(nightlight_active).state);"
@@ -952,7 +876,6 @@ script:
                   - script.execute: led_off_button_right
 
             - delay: 10ms
-
             - if:
                 condition:
                   lambda: "return (id(nightlight_active).state);"
@@ -960,42 +883,41 @@ script:
                   - script.execute: led_on_nightlight
                 else:
                   - light.turn_off: leds_nightlight
-
           else:
             - logger.log: "Neopixel Light activ → refresh_led_default ignorat"
 
   - id: led_on_button_left
-    mode: parallel
+    mode: restart
     then:
       - light.turn_on:
           id: leds_button_left
-          brightness: !lambda "return id(button_brightness);"
+          brightness: ${button_brightness}
           red: !lambda "return id(button_color)[0]/100.0;"
           green: !lambda "return id(button_color)[1]/100.0;"
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_on_button_middle
-    mode: parallel
+    mode: restart
     then:
       - light.turn_on:
           id: leds_button_middle
-          brightness: !lambda "return id(button_brightness);"
+          brightness: ${button_brightness}
           red: !lambda "return id(button_color)[0]/100.0;"
           green: !lambda "return id(button_color)[1]/100.0;"
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_on_button_right
-    mode: parallel
+    mode: restart
     then:
       - light.turn_on:
           id: leds_button_right
-          brightness: !lambda "return id(button_brightness);"
+          brightness: ${button_brightness}
           red: !lambda "return id(button_color)[0]/100.0;"
           green: !lambda "return id(button_color)[1]/100.0;"
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_off_button_left
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1012,7 +934,7 @@ script:
                 id: leds_button_left
 
   - id: led_off_button_middle
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1029,7 +951,7 @@ script:
                 id: leds_button_middle
 
   - id: led_off_button_right
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1046,7 +968,7 @@ script:
                 id: leds_button_right
 
   - id: led_on_nightlight
-    mode: parallel
+    mode: restart
     then:
       - light.turn_on:
           id: leds_nightlight
@@ -1056,7 +978,7 @@ script:
           blue: !lambda "return id(nightlight_color)[2]/100.0;"
 
   - id: led_on_touch
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1075,7 +997,7 @@ script:
             - script.execute: refresh_led_default
 
   - id: led_on_swipe_left
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1090,7 +1012,7 @@ script:
                 effect: ${swipe_left_effect}
 
   - id: led_on_swipe_right
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1105,7 +1027,7 @@ script:
                 effect: ${swipe_right_effect}
 
   - id: led_on_full_touch
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1120,7 +1042,7 @@ script:
                 effect: ${multi_touch_effect}
 
   - id: led_on_long_touch
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1136,7 +1058,7 @@ script:
       - script.execute: refresh_led_default
 
   - id: handle_release
-    mode: parallel
+    mode: restart
     parameters:
       pos: int
     then:
