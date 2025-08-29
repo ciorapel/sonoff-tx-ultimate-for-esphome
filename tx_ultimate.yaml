@@ -53,6 +53,7 @@ substitutions:
   uart_tx_pin: GPIO19
   uart_rx_pin: GPIO22
   touchpanel_power_pin: GPIO5
+  led_pin: GPIO13
 
 i2s_audio:
   - id: if_i2s_audio
