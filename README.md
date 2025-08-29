@@ -4,6 +4,7 @@ Bazat pe <https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome>
 
 Modificări aduse:
 
+- migrat complet de pe ARDUINO pe ESP-IDF.
 - scos complet nightlight automat folosind geolocație hardcodată
 - introdus variabile pentru ascunderea din HA a butoanelor pentru întrerupătoarele cu mai puțin de 3 poziții (știu, se putea face mai frumos, dar ... merge și așa)
 - reparat bug de toggle nightlight la fiecare restart
@@ -19,12 +20,11 @@ Modificări aduse:
 - adăugată ascunderea zonelor de touchfield în funcție de numărul de poziții ale întrerupătorului
 - nu mai este întrerupt efectul NeoPixel când se face update asupra unei entități (se apasă pe întrerupător fizic, se activează din HA, intervine nightlight etc.)
 - multitouch: dacă toate butoanele sunt active, le dezactivează pe toate; dacă e un buton neactivat, îl activează (multitouch se asigură că sunt toate butoanele aprinse, și dacă sunt toate aprinse, le stinge)
-- long touch face toggle la nightlight
+- long touch: face toggle la nightlight
 - ajustat pe cât posibil C în tentativa de scăpat de bug-ul care apare la apăsări extrem de scurte, unde nu se mai trimite release-ul.
 - adaugat modalitate de dezactivare vibrație, separat de DND.
+- expus toate culorile si intensitatile in HA
 - etc.
-
-Există și o variantă ESP-IDF funcțională dar în lucru, care momentan are bug cu mic flicker pe neopixel când întrerupătorul are mediaplayer activ și se acționează butoanele.
 
 Pentru detalii privind codul care stă la baza acestui proiect: <https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome>
 
