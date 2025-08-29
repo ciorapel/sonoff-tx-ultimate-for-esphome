@@ -65,7 +65,7 @@ esphome:
   friendly_name: ${friendly_name}
   project:
     name: smarthomeyourself-crpl.tx_ultimate
-    version: "2.0"
+    version: "2.1"
 
   on_boot:
     priority: -100
