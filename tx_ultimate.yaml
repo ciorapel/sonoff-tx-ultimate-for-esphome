@@ -2,6 +2,7 @@ substitutions:
   name: intrerupator_default
   friendly_name: "Intrerupator Default"
   relay_count: "2"
+
   relay_2_internal: "false"
   relay_3_internal: "true"
 
@@ -14,6 +15,7 @@ substitutions:
 
   button_brightness_default: "0.4"
   button_color_default: "{100,100,100}"
+
   button_brightness_nightlight: "0.7"
   button_color_nightlight: "{100,80,60}"
 
@@ -43,18 +45,13 @@ substitutions:
   relay_1_pin: GPIO18
   relay_2_pin: GPIO17
   relay_3_pin: GPIO27
-  relay_4_pin: GPIO23
 
   neopixel_light_id: light.${name}_neopixel_light
 
   vibra_motor_pin: GPIO21
   pa_power_pin: GPIO26
-
-  led_pin: GPIO13
- 
   uart_tx_pin: GPIO19
   uart_rx_pin: GPIO22
-
   touchpanel_power_pin: GPIO5
 
 i2s_audio:
@@ -67,7 +64,7 @@ esphome:
   friendly_name: ${friendly_name}
   project:
     name: smarthomeyourself-crpl.tx_ultimate
-    version: "1.0"
+    version: "2.0"
 
   on_boot:
     priority: -100
@@ -119,7 +116,6 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  fast_connect: true
   power_save_mode: none
   reboot_timeout: 15min
 
@@ -158,10 +154,6 @@ globals:
     type: int [3]
     restore_value: no
     initial_value: ${nightlight_color}
-#  - id: button_color
-#    type: int [3]
-#    restore_value: no
-#    initial_value: ${button_color}
   - id: long_press_color
     type: int [3]
     restore_value: no
@@ -343,7 +335,7 @@ switch:
     icon: "mdi:weather-night"
   - platform: template
     name: "Vibration"
-    id: no_vibra
+    id: vibra_enabled
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     icon: "mdi:vibrate"
@@ -538,52 +530,15 @@ light:
           transition_length: 1.4s
           update_interval: 1s
       - addressable_scan:
-      - addressable_scan:
-          name: Scan Effect With Custom Values
-          move_interval: 100ms
-          scan_width: 1
       - addressable_color_wipe:
-      - addressable_color_wipe:
-          name: Color Wipe Effect With Custom Values
-          colors:
-            - red: 100%
-              green: 100%
-              blue: 100%
-              num_leds: 5
-              gradient: true
-            - red: 0%
-              green: 0%
-              blue: 0%
-              num_leds: 1
-          add_led_interval: 100ms
-          reverse: false
       - addressable_twinkle:
-      - addressable_twinkle:
-          name: Twinkle Effect With Custom Values
-          twinkle_probability: 5%
-          progress_interval: 4ms
       - addressable_random_twinkle:
-      - addressable_random_twinkle:
-          name: Random Twinkle Effect With Custom Values
-          twinkle_probability: 5%
-          progress_interval: 32ms
       - addressable_fireworks:
-      - addressable_fireworks:
-          name: Fireworks Effect With Custom Values
-          update_interval: 32ms
-          spark_probability: 10%
-          use_random_color: false
-          fade_out_rate: 120
       - addressable_fireworks:
           name: Revelion
           spark_probability: 20%
           use_random_color: true
           fade_out_rate: 120
-      - addressable_flicker:
-      - addressable_flicker:
-          name: Flicker Effect With Custom Values
-          update_interval: 16ms
-          intensity: 5%
     on_turn_off:
       then:
         - script.execute: refresh_led_default
@@ -690,7 +645,7 @@ tx_ultimate_touch:
     - if:
         condition:
           lambda: |-
-            return !id(dnd_mode).state && id(no_vibra).state;
+            return !id(dnd_mode).state && id(vibra_enabled).state;
         then:
           - switch.turn_on: vibra
     - script.execute: led_on_touch
@@ -710,7 +665,7 @@ tx_ultimate_touch:
     - if:
         condition:
           lambda: |-
-            return !id(dnd_mode).state && id(no_vibra).state;
+            return !id(dnd_mode).state && id(vibra_enabled).state;
         then:
           - switch.turn_on: vibra
 
@@ -725,7 +680,7 @@ tx_ultimate_touch:
     - if:
         condition:
           lambda: |-
-            return !id(dnd_mode).state && id(no_vibra).state;
+            return !id(dnd_mode).state && id(vibra_enabled).state;
         then:
           - switch.turn_on: vibra
     - binary_sensor.template.publish:
@@ -739,39 +694,33 @@ tx_ultimate_touch:
     - if:
         condition:
           lambda: |-
-            return !id(dnd_mode).state && id(no_vibra).state;
+            return !id(dnd_mode).state && id(vibra_enabled).state;
         then:
           - switch.turn_on: vibra
     - binary_sensor.template.publish:
         id: multi_touch
         state: ON
     
-    # LOGICA NOUĂ pentru controlul releelor non-interne
     - lambda: |-
-        // Determină care releuri sunt active și non-interne
         std::vector<bool> relay_states;
         std::vector<std::string> relay_names;
         
-        // Verifică releu 1 (întotdeauna non-internal)
         bool relay1_state = id(runtime_relay_1_coupled) ? id(relay_1).state : id(dummy_relay_1).state;
         relay_states.push_back(relay1_state);
         relay_names.push_back("relay_1");
         
-        // Verifică releu 2 doar dacă nu e internal
         if (${relay_count} >= 2 && !${relay_2_internal}) {
           bool relay2_state = id(runtime_relay_2_coupled) ? id(relay_2).state : id(dummy_relay_2).state;
           relay_states.push_back(relay2_state);
           relay_names.push_back("relay_2");
         }
         
-        // Verifică releu 3 doar dacă nu e internal  
         if (${relay_count} >= 3 && !${relay_3_internal}) {
           bool relay3_state = id(runtime_relay_3_coupled) ? id(relay_3).state : id(dummy_relay_3).state;
           relay_states.push_back(relay3_state);
           relay_names.push_back("relay_3");
         }
         
-        // Verifică dacă toate releele non-interne sunt ON
         bool all_on = true;
         bool any_on = false;
         
@@ -783,17 +732,14 @@ tx_ultimate_touch:
         ESP_LOGD("multitouch", "Found %d non-internal relays, all_on: %d, any_on: %d", 
                  relay_states.size(), all_on, any_on);
         
-        // Setează acțiunea: dacă toate sunt ON -> stinge toate, altfel -> aprinde toate
         id(multitouch_action_turn_on) = !all_on;
         
     - if:
         condition:
           lambda: "return id(multitouch_action_turn_on);"
         then:
-          # APRINDE toate releele non-interne
           - logger.log: "MultiTouch: Aprind toate releele non-interne"
           
-          # Releu 1 (întotdeauna non-internal)
           - if:
               condition:
                 lambda: "return id(runtime_relay_1_coupled);"
@@ -802,7 +748,6 @@ tx_ultimate_touch:
               else:
                 - switch.turn_on: dummy_relay_1
           
-          # Releu 2 (doar dacă nu e internal)
           - if:
               condition:
                 lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
@@ -816,7 +761,6 @@ tx_ultimate_touch:
                     else:
                       - switch.turn_on: dummy_relay_2
           
-          # Releu 3 (doar dacă nu e internal)
           - if:
               condition:
                 lambda: "return ${relay_count} >= 3 && !${relay_3_internal};"
@@ -829,10 +773,8 @@ tx_ultimate_touch:
                     else:
                       - switch.turn_on: dummy_relay_3
         else:
-          # STINGE toate releele non-interne
           - logger.log: "MultiTouch: Sting toate releele non-interne"
           
-          # Releu 1 (întotdeauna non-internal)
           - if:
               condition:
                 lambda: "return id(runtime_relay_1_coupled);"
@@ -841,7 +783,6 @@ tx_ultimate_touch:
               else:
                 - switch.turn_off: dummy_relay_1
           
-          # Releu 2 (doar dacă nu e internal)
           - if:
               condition:
                 lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
@@ -855,7 +796,6 @@ tx_ultimate_touch:
                     else:
                       - switch.turn_off: dummy_relay_2
           
-          # Releu 3 (doar dacă nu e internal)
           - if:
               condition:
                 lambda: "return ${relay_count} >= 3 && !${relay_3_internal};"
@@ -877,7 +817,7 @@ tx_ultimate_touch:
     - if:
         condition:
           lambda: |-
-            return !id(dnd_mode).state && id(no_vibra).state;
+            return !id(dnd_mode).state && id(vibra_enabled).state;
         then:
           - switch.turn_on: vibra
 
@@ -907,7 +847,7 @@ script:
                 int def[3] = ${button_color_default};
                 for (int i = 0; i < 3; i++) id(button_color)[i] = def[i];
   - id: refresh_led_default
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -965,7 +905,7 @@ script:
             - logger.log: "Neopixel Light activ → refresh_led_default ignorat"
 
   - id: led_on_button_left
-    mode: parallel
+    mode: restart
     then:
       - light.turn_on:
           id: leds_button_left
@@ -975,7 +915,7 @@ script:
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_on_button_middle
-    mode: parallel
+    mode: restart
     then:
       - light.turn_on:
           id: leds_button_middle
@@ -985,7 +925,7 @@ script:
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_on_button_right
-    mode: parallel
+    mode: restart
     then:
       - light.turn_on:
           id: leds_button_right
@@ -995,7 +935,7 @@ script:
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_off_button_left
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1012,7 +952,7 @@ script:
                 id: leds_button_left
 
   - id: led_off_button_middle
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1029,7 +969,7 @@ script:
                 id: leds_button_middle
 
   - id: led_off_button_right
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1046,7 +986,7 @@ script:
                 id: leds_button_right
 
   - id: led_on_nightlight
-    mode: parallel
+    mode: restart
     then:
       - light.turn_on:
           id: leds_nightlight
@@ -1056,7 +996,7 @@ script:
           blue: !lambda "return id(nightlight_color)[2]/100.0;"
 
   - id: led_on_touch
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1075,7 +1015,7 @@ script:
             - script.execute: refresh_led_default
 
   - id: led_on_swipe_left
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1090,7 +1030,7 @@ script:
                 effect: ${swipe_left_effect}
 
   - id: led_on_swipe_right
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1105,7 +1045,7 @@ script:
                 effect: ${swipe_right_effect}
 
   - id: led_on_full_touch
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1120,7 +1060,7 @@ script:
                 effect: ${multi_touch_effect}
 
   - id: led_on_long_touch
-    mode: parallel
+    mode: restart
     then:
       - if:
           condition:
@@ -1136,7 +1076,7 @@ script:
       - script.execute: refresh_led_default
 
   - id: handle_release
-    mode: parallel
+    mode: restart
     parameters:
       pos: int
     then:
