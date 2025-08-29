@@ -1,7 +1,7 @@
 substitutions:
-  name: intrerupator_cap_pat_dan
-  friendly_name: "Intrerupator cap pat Dan"
-  relay_count: "2" #numarul de poziții ale intrerupatorului
+  name: intrerupator_default
+  friendly_name: "Intrerupator Default"
+  relay_count: "2"
   relay_2_internal: "false"
   relay_3_internal: "true"
 
@@ -12,8 +12,10 @@ substitutions:
   vibra_time: "150ms"
   button_on_time: "200ms"
 
-  button_brightness: "0.6"
-  button_color: "{0,0,100}"
+  button_brightness_default: "0.4"
+  button_color_default: "{100,100,100}"
+  button_brightness_nightlight: "0.7"
+  button_color_nightlight: "{100,80,60}"
 
   nightlight_brightness: "0.3"
   nightlight_color: "{100,70,50}"
@@ -144,14 +146,22 @@ preferences:
   flash_write_interval: 15min
 
 globals:
+  - id: button_brightness
+    type: float
+    restore_value: no
+    initial_value: ${button_brightness_default}
+  - id: button_color
+    type: int[3]
+    restore_value: no
+    initial_value: ${button_color_default}
   - id: nightlight_color
     type: int [3]
     restore_value: no
     initial_value: ${nightlight_color}
-  - id: button_color
-    type: int [3]
-    restore_value: no
-    initial_value: ${button_color}
+#  - id: button_color
+#    type: int [3]
+#    restore_value: no
+#    initial_value: ${button_color}
   - id: long_press_color
     type: int [3]
     restore_value: no
@@ -315,383 +325,6 @@ binary_sensor:
           state: OFF
       - script.execute: refresh_led_default
 
-number:
-  - platform: template
-    name: "Nightlight Red"
-    id: nightlight_red
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(nightlight_color)[0] = (int)x;
-        - script.execute: refresh_led_default
-
-  - platform: template
-    name: "Nightlight Green"
-    id: nightlight_green
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 70
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(nightlight_color)[1] = (int)x;
-        - script.execute: refresh_led_default
-
-  - platform: template
-    name: "Nightlight Blue"
-    id: nightlight_blue
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 50
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(nightlight_color)[2] = (int)x;
-        - script.execute: refresh_led_default
-
-  - platform: template
-    name: "Nightlight Brightness"
-    id: nightlight_brightness_control
-    min_value: 0.1
-    max_value: 1.0
-    step: 0.1
-    initial_value: ${nightlight_brightness}
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - script.execute: refresh_led_default
-
-  - platform: template
-    name: "Button Brightness"
-    id: button_brightness_control
-    min_value: 0.1
-    max_value: 1.0
-    step: 0.1
-    initial_value: ${button_brightness}
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - script.execute: refresh_led_default
-
-  - platform: template
-    name: "Button Red"
-    id: button_red
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(button_color)[0] = (int)x;
-        - script.execute: refresh_led_default
-
-  - platform: template
-    name: "Button Green"
-    id: button_green
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(button_color)[1] = (int)x;
-        - script.execute: refresh_led_default
-
-  - platform: template
-    name: "Button Blue"
-    id: button_blue
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(button_color)[2] = (int)x;
-        - script.execute: refresh_led_default
-
-  - platform: template
-    name: "Touch Red"
-    id: touch_red
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(touch_color)[0] = (int)x;
-
-  - platform: template
-    name: "Touch Green"
-    id: touch_green
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(touch_color)[1] = (int)x;
-
-  - platform: template
-    name: "Touch Blue"
-    id: touch_blue
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(touch_color)[2] = (int)x;
-
-  - platform: template
-    name: "Touch Brightness"
-    id: touch_brightness_control
-    min_value: 0.1
-    max_value: 1.0
-    step: 0.1
-    initial_value: ${touch_brightness}
-    optimistic: true
-    restore_value: true
-
-  - platform: template
-    name: "Long Press Red"
-    id: long_press_red
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(long_press_color)[0] = (int)x;
-
-  - platform: template
-    name: "Long Press Green"
-    id: long_press_green
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(long_press_color)[1] = (int)x;
-
-  - platform: template
-    name: "Long Press Blue"
-    id: long_press_blue
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(long_press_color)[2] = (int)x;
-
-  - platform: template
-    name: "Long Press Brightness"
-    id: long_press_brightness_control
-    min_value: 0.1
-    max_value: 1.0
-    step: 0.1
-    initial_value: ${long_press_brightness}
-    optimistic: true
-    restore_value: true
-
-  - platform: template
-    name: "Multi Touch Red"
-    id: multi_touch_red
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(multi_touch_color)[0] = (int)x;
-
-  - platform: template
-    name: "Multi Touch Green"
-    id: multi_touch_green
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(multi_touch_color)[1] = (int)x;
-
-  - platform: template
-    name: "Multi Touch Blue"
-    id: multi_touch_blue
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(multi_touch_color)[2] = (int)x;
-
-  - platform: template
-    name: "Multi Touch Brightness"
-    id: multi_touch_brightness_control
-    min_value: 0.1
-    max_value: 1.0
-    step: 0.1
-    initial_value: ${multi_touch_brightness}
-    optimistic: true
-    restore_value: true
-
-  - platform: template
-    name: "Swipe Left Red"
-    id: swipe_left_red
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(swipe_left_color)[0] = (int)x;
-
-  - platform: template
-    name: "Swipe Left Green"
-    id: swipe_left_green
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(swipe_left_color)[1] = (int)x;
-
-  - platform: template
-    name: "Swipe Left Blue"
-    id: swipe_left_blue
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(swipe_left_color)[2] = (int)x;
-
-  - platform: template
-    name: "Swipe Left Brightness"
-    id: swipe_left_brightness_control
-    min_value: 0.1
-    max_value: 1.0
-    step: 0.1
-    initial_value: ${swipe_left_brightness}
-    optimistic: true
-    restore_value: true
-
-  - platform: template
-    name: "Swipe Right Red"
-    id: swipe_right_red
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 100
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(swipe_right_color)[0] = (int)x;
-
-  - platform: template
-    name: "Swipe Right Green"
-    id: swipe_right_green
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 70
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(swipe_right_color)[1] = (int)x;
-
-  - platform: template
-    name: "Swipe Right Blue"
-    id: swipe_right_blue
-    min_value: 0
-    max_value: 100
-    step: 1
-    initial_value: 0
-    optimistic: true
-    restore_value: true
-    on_value:
-      then:
-        - lambda: |-
-            id(swipe_right_color)[2] = (int)x;
-
-  - platform: template
-    name: "Swipe Right Brightness"
-    id: swipe_right_brightness_control
-    min_value: 0.1
-    max_value: 1.0
-    step: 0.1
-    initial_value: ${swipe_right_brightness}
-    optimistic: true
-    restore_value: true
-
 switch:
   - id: sw_audio_amplifier
     name: Audio Amplifier
@@ -827,9 +460,11 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
+        - script.execute: update_button_settings
         - script.execute: refresh_led_default
     on_turn_off:
       then:
+        - script.execute: update_button_settings
         - script.execute: refresh_led_default
   - platform: restart
     name: "Restart"
@@ -1255,6 +890,22 @@ tx_ultimate_touch:
         ESP_LOGD("tx_ultimate_touch.on_long_touch_release", "Long Touch Release Position: %d / State: %d", touch.x, touch.state);
 
 script:
+  - id: update_button_settings
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: "return id(nightlight_active).state;"
+          then:
+            - lambda: |-
+                id(button_brightness) = ${button_brightness_nightlight};
+                int nightlight[3] = ${button_color_nightlight};
+                for (int i = 0; i < 3; i++) id(button_color)[i] = nightlight[i];
+          else:
+            - lambda: |-
+                id(button_brightness) = ${button_brightness_default};
+                int def[3] = ${button_color_default};
+                for (int i = 0; i < 3; i++) id(button_color)[i] = def[i];
   - id: refresh_led_default
     mode: parallel
     then:
@@ -1264,13 +915,14 @@ script:
               return !id(ha_neopixel_active).state;
           then:
             - light.turn_off: leds_bottom
+
             - if:
                 condition:
                   lambda: "return (id(nightlight_active).state);"
                 then:
                   - light.turn_on:
                       id: leds_bottom
-                      brightness: !lambda "return id(nightlight_brightness_control).state;"
+                      brightness: ${nightlight_brightness}
                       red: !lambda "return id(nightlight_color)[0]/100.0;"
                       green: !lambda "return id(nightlight_color)[1]/100.0;"
                       blue: !lambda "return id(nightlight_color)[2]/100.0;"
@@ -1300,6 +952,7 @@ script:
                   - script.execute: led_off_button_right
 
             - delay: 10ms
+
             - if:
                 condition:
                   lambda: "return (id(nightlight_active).state);"
@@ -1307,15 +960,16 @@ script:
                   - script.execute: led_on_nightlight
                 else:
                   - light.turn_off: leds_nightlight
+
           else:
             - logger.log: "Neopixel Light activ → refresh_led_default ignorat"
-            
+
   - id: led_on_button_left
     mode: parallel
     then:
       - light.turn_on:
           id: leds_button_left
-          brightness: !lambda "return id(button_brightness_control).state;"
+          brightness: !lambda "return id(button_brightness);"
           red: !lambda "return id(button_color)[0]/100.0;"
           green: !lambda "return id(button_color)[1]/100.0;"
           blue: !lambda "return id(button_color)[2]/100.0;"
@@ -1325,7 +979,7 @@ script:
     then:
       - light.turn_on:
           id: leds_button_middle
-          brightness: !lambda "return id(button_brightness_control).state;"
+          brightness: !lambda "return id(button_brightness);"
           red: !lambda "return id(button_color)[0]/100.0;"
           green: !lambda "return id(button_color)[1]/100.0;"
           blue: !lambda "return id(button_color)[2]/100.0;"
@@ -1335,7 +989,7 @@ script:
     then:
       - light.turn_on:
           id: leds_button_right
-          brightness: !lambda "return id(button_brightness_control).state;"
+          brightness: !lambda "return id(button_brightness);"
           red: !lambda "return id(button_color)[0]/100.0;"
           green: !lambda "return id(button_color)[1]/100.0;"
           blue: !lambda "return id(button_color)[2]/100.0;"
@@ -1349,7 +1003,7 @@ script:
           then:
             - light.turn_on:
                 id: leds_button_left
-                brightness: !lambda "return id(nightlight_brightness_control).state;"
+                brightness: ${nightlight_brightness}
                 red: !lambda "return id(nightlight_color)[0]/100.0;"
                 green: !lambda "return id(nightlight_color)[1]/100.0;"
                 blue: !lambda "return id(nightlight_color)[2]/100.0;"
@@ -1366,7 +1020,7 @@ script:
           then:
             - light.turn_on:
                 id: leds_button_middle
-                brightness: !lambda "return id(nightlight_brightness_control).state;"
+                brightness: ${nightlight_brightness}
                 red: !lambda "return id(nightlight_color)[0]/100.0;"
                 green: !lambda "return id(nightlight_color)[1]/100.0;"
                 blue: !lambda "return id(nightlight_color)[2]/100.0;"
@@ -1383,7 +1037,7 @@ script:
           then:
             - light.turn_on:
                 id: leds_button_right
-                brightness: !lambda "return id(nightlight_brightness_control).state;"
+                brightness: ${nightlight_brightness}
                 red: !lambda "return id(nightlight_color)[0]/100.0;"
                 green: !lambda "return id(nightlight_color)[1]/100.0;"
                 blue: !lambda "return id(nightlight_color)[2]/100.0;"
@@ -1396,7 +1050,7 @@ script:
     then:
       - light.turn_on:
           id: leds_nightlight
-          brightness: !lambda "return id(nightlight_brightness_control).state;"
+          brightness: ${nightlight_brightness}
           red: !lambda "return id(nightlight_color)[0]/100.0;"
           green: !lambda "return id(nightlight_color)[1]/100.0;"
           blue: !lambda "return id(nightlight_color)[2]/100.0;"
@@ -1412,7 +1066,7 @@ script:
           then:
             - light.turn_on:
                 id: leds_bottom
-                brightness: !lambda "return id(touch_brightness_control).state;"
+                brightness: ${touch_brightness}
                 red: !lambda "return id(touch_color)[0]/100.0;"
                 green: !lambda "return id(touch_color)[1]/100.0;"
                 blue: !lambda "return id(touch_color)[2]/100.0;"
@@ -1429,7 +1083,7 @@ script:
           then:
             - light.turn_on:
                 id: leds_bottom
-                brightness: !lambda "return id(swipe_left_brightness_control).state;"
+                brightness: ${swipe_left_brightness}
                 red: !lambda "return id(swipe_left_color)[0]/100.0;"
                 green: !lambda "return id(swipe_left_color)[1]/100.0;"
                 blue: !lambda "return id(swipe_left_color)[2]/100.0;"
@@ -1444,7 +1098,7 @@ script:
           then:
             - light.turn_on:
                 id: leds_bottom
-                brightness: !lambda "return id(swipe_right_brightness_control).state;"
+                brightness: ${swipe_right_brightness}
                 red: !lambda "return id(swipe_right_color)[0]/100.0;"
                 green: !lambda "return id(swipe_right_color)[1]/100.0;"
                 blue: !lambda "return id(swipe_right_color)[2]/100.0;"
@@ -1459,7 +1113,7 @@ script:
           then:
             - light.turn_on:
                 id: leds_bottom
-                brightness: !lambda "return id(multi_touch_brightness_control).state;"
+                brightness: ${multi_touch_brightness}
                 red: !lambda "return id(multi_touch_color)[0]/100.0;"
                 green: !lambda "return id(multi_touch_color)[1]/100.0;"
                 blue: !lambda "return id(multi_touch_color)[2]/100.0;"
@@ -1474,7 +1128,7 @@ script:
           then:
             - light.turn_on:
                 id: leds_bottom
-                brightness: !lambda "return id(long_press_brightness_control).state;"
+                brightness: ${long_press_brightness}
                 red: !lambda "return id(long_press_color)[0]/100.0;"
                 green: !lambda "return id(long_press_color)[1]/100.0;"
                 blue: !lambda "return id(long_press_color)[2]/100.0;"

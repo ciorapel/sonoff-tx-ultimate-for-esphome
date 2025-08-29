@@ -23,7 +23,7 @@ Modificări aduse:
 - long touch: face toggle la nightlight
 - ajustat pe cât posibil C în tentativa de scăpat de bug-ul care apare la apăsări extrem de scurte, unde nu se mai trimite release-ul.
 - adaugat modalitate de dezactivare vibrație, separat de DND.
-- expus toate culorile si intensitatile in HA
+- indicatoarele de aprindere au culoare și intensitate diferită: default și când nightlight e pornit.
 - etc.
 
 Pentru detalii privind codul care stă la baza acestui proiect: <https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome>
