@@ -1,6 +1,6 @@
 substitutions:
-  name: intrerupator_cap_pat_dan
-  friendly_name: "Intrerupator cap pat Dan"
+  name: intrerupator_default
+  friendly_name: "Intrerupator default"
   relay_count: "2" #numarul de poziții ale intrerupatorului
   relay_2_internal: "false"
   relay_3_internal: "true"
@@ -53,11 +53,12 @@ substitutions:
   uart_tx_pin: GPIO19
   uart_rx_pin: GPIO22
 
-  audio_lrclk_pin: GPIO4
-  audio_bclk_pin: GPIO2
-  audio_sdata_pin: GPIO15
-
   touchpanel_power_pin: GPIO5
+
+i2s_audio:
+  - id: if_i2s_audio
+    i2s_bclk_pin: GPIO2
+    i2s_lrclk_pin: GPIO4
 
 esphome:
   name: ${name}
@@ -95,17 +96,18 @@ esphome:
 esp32:
   board: esp32dev
   framework:
-    type: arduino
+    type: esp-idf
 
 logger:
-  level: DEBUG
+  level: INFO
   logs:
-    binary_sensor: INFO
-    light: INFO
-    script: INFO
-    switch: INFO
+    binary_sensor: WARN
+    light: WARN
+    script: WARN
+    switch: WARN
     tx_ultimate_touch: INFO
-    uart_debug: INFO
+    uart_debug: WARN
+    media_player: INFO
 
 api:
 
@@ -115,6 +117,9 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+  reboot_timeout: 15min
 
   ap:
     password: "123456789"
@@ -124,19 +129,19 @@ improv_serial:
 captive_portal:
 
 external_components:
-#  - source:
-#      type: git
-#      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
-#      ref: main
-#    components: [tx_ultimate_touch]
   - source:
-      type: local
-      path: components
+      type: git
+      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
+      ref: main
     components: [tx_ultimate_touch]
-    refresh: 0s
+#  - source:
+#      type: local
+#      path: components
+#    components: [tx_ultimate_touch]
+#    refresh: 0s
 
 preferences:
-  flash_write_interval: 5min
+  flash_write_interval: 15min
 
 globals:
   - id: nightlight_color
@@ -182,6 +187,7 @@ globals:
   - id: runtime_relay_1_coupled
     type: bool
     initial_value: ${relay_1_coupled}
+    restore_value: no  
   - id: runtime_relay_2_coupled
     type: bool
     restore_value: no
@@ -310,18 +316,27 @@ binary_sensor:
       - script.execute: refresh_led_default
 
 switch:
+  - id: sw_audio_amplifier
+    name: Audio Amplifier
+    platform: gpio
+    pin:
+      number: GPIO26
+      inverted: false
+    restore_mode: ALWAYS_ON
+    internal: true
+    entity_category: config
   - platform: template
     name: "DND"
     id: dnd_mode
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: "mdi:cancel"
+    icon: "mdi:weather-night"
   - platform: template
     name: "Vibration"
     id: no_vibra
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: "mdi:cancel"
+    icon: "mdi:vibrate"
   - platform: template
     id: dummy_relay_1
     name: "Dummy L1"
@@ -421,12 +436,6 @@ switch:
       - delay: ${vibra_time}
       - switch.turn_off: vibra
   - platform: gpio
-    id: pa_power
-    pin: ${pa_power_pin}
-    name: "PA Power"
-    internal: true
-    restore_mode: ALWAYS_ON
-  - platform: gpio
     name: "touch panel power"
     pin:
       number: ${touchpanel_power_pin}
@@ -448,15 +457,65 @@ switch:
   - platform: restart
     name: "Restart"
 
+speaker:
+  - id: speaker_embedded
+    platform: i2s_audio
+    dac_type: external
+    i2s_dout_pin: GPIO15
+    i2s_audio_id: if_i2s_audio
+    i2s_comm_fmt: stand_msb
+    channel: mono
+    timeout: never
+    bits_per_sample: 16bit
+    sample_rate: 24000
+    buffer_duration: 250ms
+  - platform: mixer
+    id: mixer_speaker_embedded
+    output_speaker: speaker_embedded
+    source_speakers:
+      - id: announcement_speaker_embedded
+      - id: media_speaker_embedded
+  - platform: resampler
+    id: announcement_spk_resampling_input
+    output_speaker: announcement_speaker_embedded
+  - platform: resampler
+    id: media_spk_resampling_input
+    output_speaker: media_speaker_embedded
+
+
+media_player:
+  - id: mp_media_player
+    name: Media Player
+    internal: false
+    platform: speaker
+    codec_support_enabled: true
+    buffer_size: 100000
+    task_stack_in_psram: true
+    announcement_pipeline:
+      speaker: announcement_spk_resampling_input
+      format: WAV
+      num_channels: 1
+      sample_rate: 24000
+    media_pipeline:
+      speaker: media_spk_resampling_input
+      format: FLAC
+      num_channels: 1
+      sample_rate: 24000
+
+button:
+  - platform: factory_reset
+    name: "Factory Reset (NVS)"
+
 light:
-  - platform: neopixelbus
-    type: GRB
-    variant: WS2811
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    chipset: ws2812
+    max_refresh_rate: 33ms
+    use_psram: false
     pin: ${led_pin}
     num_leds: 28
     name: "NeoPixel Light"
     id: leds
-    default_transition_length: 1s
     effects:
       - addressable_rainbow:
           name: "Rainbow"
@@ -591,21 +650,6 @@ light:
           min_brightness: 30%
           max_brightness: 100%
 
-media_player:
-  - platform: i2s_audio
-    id: media_out
-    name: Player
-    dac_type: external
-    i2s_dout_pin: ${audio_sdata_pin}
-    i2s_audio_id: audio_i2s
-    i2s_comm_fmt: lsb
-    mode: mono
-
-i2s_audio:
-  id: audio_i2s
-  i2s_lrclk_pin: ${audio_lrclk_pin}
-  i2s_bclk_pin: ${audio_bclk_pin}
-
 uart:
   tx_pin: ${uart_tx_pin}
   rx_pin: ${uart_rx_pin}
@@ -618,10 +662,13 @@ uart:
     direction: RX
     dummy_receiver: false
     after:
-      timeout: 2s
-      bytes: 2048
+      timeout: 1s
+      bytes: 1024
     sequence:
-      - lambda: UARTDebug::log_hex(direction, bytes, ' ');
+      - lambda: |-
+          if (bytes.size() > 0) {
+            UARTDebug::log_hex(direction, bytes, ' ');
+          }
 
 tx_ultimate_touch:
   id: tx_touch
@@ -832,7 +879,7 @@ tx_ultimate_touch:
 
 script:
   - id: refresh_led_default
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -887,7 +934,7 @@ script:
             - logger.log: "Neopixel Light activ → refresh_led_default ignorat"
 
   - id: led_on_button_left
-    mode: restart
+    mode: parallel
     then:
       - light.turn_on:
           id: leds_button_left
@@ -897,7 +944,7 @@ script:
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_on_button_middle
-    mode: restart
+    mode: parallel
     then:
       - light.turn_on:
           id: leds_button_middle
@@ -907,7 +954,7 @@ script:
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_on_button_right
-    mode: restart
+    mode: parallel
     then:
       - light.turn_on:
           id: leds_button_right
@@ -917,7 +964,7 @@ script:
           blue: !lambda "return id(button_color)[2]/100.0;"
 
   - id: led_off_button_left
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -934,7 +981,7 @@ script:
                 id: leds_button_left
 
   - id: led_off_button_middle
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -951,7 +998,7 @@ script:
                 id: leds_button_middle
 
   - id: led_off_button_right
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -968,7 +1015,7 @@ script:
                 id: leds_button_right
 
   - id: led_on_nightlight
-    mode: restart
+    mode: parallel
     then:
       - light.turn_on:
           id: leds_nightlight
@@ -978,7 +1025,7 @@ script:
           blue: !lambda "return id(nightlight_color)[2]/100.0;"
 
   - id: led_on_touch
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -997,7 +1044,7 @@ script:
             - script.execute: refresh_led_default
 
   - id: led_on_swipe_left
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -1012,7 +1059,7 @@ script:
                 effect: ${swipe_left_effect}
 
   - id: led_on_swipe_right
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -1027,7 +1074,7 @@ script:
                 effect: ${swipe_right_effect}
 
   - id: led_on_full_touch
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -1042,7 +1089,7 @@ script:
                 effect: ${multi_touch_effect}
 
   - id: led_on_long_touch
-    mode: restart
+    mode: parallel
     then:
       - if:
           condition:
@@ -1058,7 +1105,7 @@ script:
       - script.execute: refresh_led_default
 
   - id: handle_release
-    mode: restart
+    mode: parallel
     parameters:
       pos: int
     then:
