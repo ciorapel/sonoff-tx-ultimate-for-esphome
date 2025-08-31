@@ -1,6 +1,6 @@
 substitutions:
-  name: intrerupator_default
-  friendly_name: "Intrerupator Default"
+  name: intrerupator_cap_pat_dan
+  friendly_name: "Intrerupator cap pat Dan"
   relay_count: "2"
   relay_2_internal: "false"
   relay_3_internal: "true"
@@ -1018,7 +1018,9 @@ script:
     then:
       - if:
           condition:
-            lambda: "return !id(dnd_mode).state;"
+            and:
+              - lambda: "return !id(ha_neopixel_active).state;"
+              - lambda: "return !id(dnd_mode).state;"
           then:
             - light.turn_on:
                 id: leds_bottom
@@ -1033,7 +1035,9 @@ script:
     then:
       - if:
           condition:
-            lambda: "return !id(dnd_mode).state;"
+            and:
+              - lambda: "return !id(ha_neopixel_active).state;"
+              - lambda: "return !id(dnd_mode).state;"
           then:
             - light.turn_on:
                 id: leds_bottom
@@ -1048,7 +1052,9 @@ script:
     then:
       - if:
           condition:
-            lambda: "return !id(dnd_mode).state;"
+            and:
+              - lambda: "return !id(ha_neopixel_active).state;"
+              - lambda: "return !id(dnd_mode).state;"
           then:
             - light.turn_on:
                 id: leds_bottom
@@ -1063,7 +1069,9 @@ script:
     then:
       - if:
           condition:
-            lambda: "return !id(dnd_mode).state;"
+            and:
+              - lambda: "return !id(ha_neopixel_active).state;"
+              - lambda: "return !id(dnd_mode).state;"
           then:
             - light.turn_on:
                 id: leds_bottom

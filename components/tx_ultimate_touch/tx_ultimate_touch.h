@@ -8,6 +8,7 @@
 #include "esphome/components/light/addressable_light.h"
 #include <array>
 #include <string>
+#include <vector>
 
 namespace esphome {
     namespace tx_ultimate_touch {
@@ -40,6 +41,10 @@ namespace esphome {
         constexpr uint16_t LONG_PRESS_TIMEOUT = 3000;          // Timeout final la 3000ms (mai scurt)
         constexpr uint16_t LONG_PRESS_THRESHOLD = 1200;        // Pragul pentru long press (1200ms)
         
+        // CRC Constants
+        constexpr uint16_t CRC16_POLY = 0x1021;  // CRC-16/CCITT-FALSE polynomial
+        constexpr uint16_t CRC16_INIT = 0xFFFF;  // Initial CRC value
+        
         // Special Values
         constexpr uint8_t INVALID_VALUE = 255;
 
@@ -52,11 +57,14 @@ namespace esphome {
 
         static const char *TAG = "tx_ultimate_touch";
 
-        // Enhanced TouchPoint structure
+        // Enhanced TouchPoint structure with swipe details
         struct TouchPoint {
-            uint8_t x = INVALID_VALUE;       // Position (1-10)
-            uint8_t state = INVALID_VALUE;   // Touch state
-            std::string state_str = "Unknown"; // Human readable state
+            uint8_t x = INVALID_VALUE;           // Position (1-10)
+            uint8_t from_pos = INVALID_VALUE;    // Start position for swipe
+            uint8_t to_pos = INVALID_VALUE;      // End position for swipe
+            uint8_t state = INVALID_VALUE;       // Touch state
+            std::string state_str = "Unknown";   // Human readable state
+            bool crc_valid = false;              // CRC validation status
         };
 
         class TxUltimateTouch : public uart::UARTDevice, public Component {
@@ -84,22 +92,32 @@ namespace esphome {
         protected:
             // Core processing methods - optimized signatures
             void send_touch_(TouchPoint tp);
-            void handle_touch(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes);
-            TouchPoint get_touch_point(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) const;
-            bool is_valid_data(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) const;
-            uint8_t get_x_touch_position(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) const;
-            uint8_t get_touch_state(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) const;
+            void handle_touch(const std::vector<uint8_t> &packet);
+            TouchPoint get_touch_point(const std::vector<uint8_t> &packet) const;
+            bool is_valid_data(const std::vector<uint8_t> &packet) const;
+            uint8_t get_x_touch_position(const std::vector<uint8_t> &packet) const;
+            uint8_t get_touch_state(const std::vector<uint8_t> &packet) const;
             std::string get_state_string(uint8_t state) const;
             
-            // METODE PENTRU STATE MACHINE
+            // CRC validation methods
+            uint16_t calculate_crc16(const uint8_t* data, size_t length, uint16_t poly = CRC16_POLY) const;
+            bool validate_crc16(const std::vector<uint8_t> &packet) const;
+            
+            // Enhanced packet processing methods
             void process_uart_packets();
+            void process_multiple_messages(std::vector<uint8_t> &buffer);
+            std::vector<std::vector<uint8_t>> split_packets(const std::vector<uint8_t> &buffer);
+            void dump_packet_hex(const std::vector<uint8_t> &packet, const std::string &label = "") const;
+            
+            // Enhanced swipe detection
+            void extract_swipe_positions(const std::vector<uint8_t> &packet, TouchPoint &tp) const;
+            
+            // STATE MACHINE methods
             void handle_touch_state_machine();
             void transition_to_state(TouchStateMachine new_state);
             void force_release();
             void handle_release_event(TouchPoint tp, unsigned long current_time);
             void simulate_touch_sequence(uint8_t position);
-            
-            // NOUA METODA PENTRU RESETAREA STARII
             void reset_touch_state();
 
             // Event triggers - comprehensive set
@@ -112,12 +130,13 @@ namespace esphome {
             Trigger<TouchPoint> long_touch_release_trigger_; // Long press release
             Trigger<TouchPoint> touch_event_trigger_;        // All events (from tx_ultimate_easy)
 
-            // Configuration - ELIMINAT gang_count_
+            // STATE MACHINE variables
+            TouchStateMachine touch_state_ = TOUCH_IDLE;         // Current state machine state
+            unsigned long state_start_time_ = 0;                 // Time when current state started
+            uint8_t last_press_x_ = INVALID_VALUE;               // Last press position (for long press)
             
-            // VARIABILE PENTRU STATE MACHINE (mai puține și mai clare)
-            TouchStateMachine touch_state_ = TOUCH_IDLE;         // Starea curentă a state machine-ului
-            unsigned long state_start_time_ = 0;                 // Timpul când a început starea curentă
-            uint8_t last_press_x_ = INVALID_VALUE;               // Poziția ultimului press (pentru long press)
+            // Buffer management
+            std::vector<uint8_t> uart_buffer_;                   // Persistent UART buffer
         }; // class TxUltimateTouch
 
     } // namespace tx_ultimate_touch
