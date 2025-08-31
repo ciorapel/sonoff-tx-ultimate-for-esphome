@@ -2,7 +2,6 @@ substitutions:
   name: intrerupator_default
   friendly_name: "Intrerupator Default"
   relay_count: "2"
-
   relay_2_internal: "false"
   relay_3_internal: "true"
 
@@ -65,7 +64,7 @@ esphome:
   friendly_name: ${friendly_name}
   project:
     name: smarthomeyourself-crpl.tx_ultimate
-    version: "2.1"
+    version: "2.2"
 
   on_boot:
     priority: -100
@@ -118,7 +117,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
-  reboot_timeout: 15min
+  reboot_timeout: 0s
 
   ap:
     password: "123456789"
@@ -128,20 +127,20 @@ improv_serial:
 captive_portal:
 
 external_components:
-  - source:
-      type: git
-      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
-      ref: main
-    components: [tx_ultimate_touch]
-    refresh: 1d
 #  - source:
-#      type: local
-#      path: components
+#      type: git
+#      url: https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome
+#      ref: main
 #    components: [tx_ultimate_touch]
-#    refresh: 0s
+#    refresh: 1d
+  - source:
+      type: local
+      path: components
+    components: [tx_ultimate_touch]
+    refresh: 0s
 
 preferences:
-  flash_write_interval: 15min
+  flash_write_interval: 5min
 
 globals:
   - id: button_brightness
@@ -1013,8 +1012,6 @@ script:
                 green: !lambda "return id(touch_color)[1]/100.0;"
                 blue: !lambda "return id(touch_color)[2]/100.0;"
                 effect: ${touch_effect}
-            - delay: 10s
-            - script.execute: refresh_led_default
 
   - id: led_on_swipe_left
     mode: restart

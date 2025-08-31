@@ -1,130 +1,150 @@
 #include "esphome/core/log.h"
 #include "tx_ultimate_touch.h"
+#include <cinttypes>
 
-namespace esphome
-{
-    namespace tx_ultimate_touch
-    {
-        static const char *TAG = "tx_ultimate_touch";
+namespace esphome {
+    namespace tx_ultimate_touch {
 
-        void TxUltimateTouch::setup()
-        {
-            ESP_LOGI("log", "%s", "Tx Ultimate Touch is initialized");
+        void TxUltimateTouch::setup() {
+            ESP_LOGI(TAG, "TX Ultimate Touch is initialized");
+            this->touch_state_ = TOUCH_IDLE;
         }
 
-        void TxUltimateTouch::loop()
-        {
-            static int bytes[15] = {};
+        void TxUltimateTouch::loop() {
+            // Process UART packets first
+            this->process_uart_packets();
+            
+            // Handle state machine with single timer
+            this->handle_touch_state_machine();
+        }
+
+        void TxUltimateTouch::process_uart_packets() {
+            static std::array<uint8_t, UART_BUFFER_SIZE> bytes{};
             static int i = 0;
-            static unsigned long last_activity = 0;
-            static bool packet_started = false;
+            static bool found = false;
             
-            bool found = false;
-            int byte = -1;
-            
-            unsigned long current_time = millis();
-
-            while (this->available())
-            {
-                byte = this->read();
-                last_activity = current_time;
+            while (this->available()) {
+                uint8_t byte = this->read();
                 
-                // Detectează începutul unui pachet nou
-                if (byte == 170) // 0xAA
-                {
-                    // Dacă aveam deja un pachet în curs, procesează-l
-                    if (packet_started && i > 4)
-                    {
-                        handle_touch(bytes);
+                if (byte == HEADER_BYTE_1) {
+                    if (found && i >= 6) {
+                        this->handle_touch(bytes);
                     }
-                    
-                    // Resetează pentru noul pachet
-                    memset(bytes, 0, sizeof(bytes));
+                    bytes.fill(0);
                     i = 0;
-                    packet_started = true;
+                    found = false;
                 }
-
-                if (packet_started && i < 15)
-                {
+                
+                if (i < UART_BUFFER_SIZE) {
                     bytes[i] = byte;
                     i++;
-                    
-                    // Verifică dacă avem un pachet complet (15 bytes)
-                    if (i >= 15)
-                    {
-                        handle_touch(bytes);
-                        packet_started = false;
-                        i = 0;
-                        found = true;
-                    }
                 }
-
-                if (byte != 0)
-                {
+                
+                if (byte != 0x00) {
                     found = true;
                 }
             }
-
-            // Timeout pentru pachete incomplete - dacă nu am primit date de 100ms
-            // și avem un pachet parțial, consideră-l invalid
-            if (packet_started && (current_time - last_activity > 100) && i > 0)
-            {
-                ESP_LOGW(TAG, "Packet timeout - discarding incomplete packet (i=%d)", i);
-                packet_started = false;
-                i = 0;
-                memset(bytes, 0, sizeof(bytes));
-            }
-
-            // Procesează ultimul pachet doar dacă este complet și valid
-            if (found && packet_started && i >= 4)
-            {
-                // Verifică dacă pare a fi un pachet valid înainte de procesare
-                if (bytes[0] == 170 && bytes[1] == 85 && bytes[2] == 1 && bytes[3] == 2)
-                {
-                    handle_touch(bytes);
-                    packet_started = false;
-                    i = 0;
-                }
+            
+            if (found && i >= 6) {
+                this->handle_touch(bytes);
+                found = false;
             }
         }
 
-        void TxUltimateTouch::handle_touch(int bytes[])
-        {
-            ESP_LOGV("UART-Log", "------------");
-            for (int i = 0; i < 15; i++)
-            {
-                ESP_LOGV("UART-Log", "%i", bytes[i]);
+        void TxUltimateTouch::handle_touch_state_machine() {
+            unsigned long current_time = millis();
+            unsigned long elapsed = current_time - this->state_start_time_;
+            
+            switch (this->touch_state_) {
+                case TOUCH_IDLE:
+                    // Nothing to do in idle state
+                    break;
+                    
+                case TOUCH_PRESSED:
+                    if (elapsed >= AUTO_RELEASE_TIMEOUT) {
+                        ESP_LOGW(TAG, "Auto-releasing stuck touch after %lums", elapsed);
+                        this->force_release();
+                        this->transition_to_state(TOUCH_AUTO_RELEASED);
+                    }
+                    break;
+                    
+                case TOUCH_AUTO_RELEASED:
+                    if (elapsed >= LONG_PRESS_TIMEOUT) {
+                        ESP_LOGD(TAG, "Touch state timeout, returning to idle");
+                        this->transition_to_state(TOUCH_IDLE);
+                    }
+                    break;
+            }
+        }
+
+        void TxUltimateTouch::transition_to_state(TouchStateMachine new_state) {
+            ESP_LOGV(TAG, "State transition: %d -> %d", this->touch_state_, new_state);
+            this->touch_state_ = new_state;
+            this->state_start_time_ = millis();
+        }
+
+        void TxUltimateTouch::force_release() {
+            if (this->last_press_x_ == INVALID_VALUE) return;
+            
+            TouchPoint release_tp;
+            release_tp.x = this->last_press_x_;
+            release_tp.state = TOUCH_STATE_RELEASE;
+            release_tp.state_str = this->get_state_string(release_tp.state);
+
+            ESP_LOGD(TAG, "Forced release at position %u", release_tp.x);
+            this->release_trigger_.trigger(release_tp);
+            this->touch_event_trigger_.trigger(release_tp);
+        }
+
+        void TxUltimateTouch::handle_touch(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) {
+            ESP_LOGV(TAG, "Raw packet data:");
+            
+            int packet_len = UART_BUFFER_SIZE;
+            for (int j = UART_BUFFER_SIZE - 1; j >= 0; j--) {
+                if (bytes[j] != 0) {
+                    packet_len = j + 1;
+                    break;
+                }
+            }
+            
+            for (int i = 0; i < packet_len; i++) {
+                ESP_LOGV(TAG, "  [%d]: %u", i, bytes[i]);
             }
 
-            if (is_valid_data(bytes))
-            {
-                send_touch_(get_touch_point(bytes));
-            }
-            else
-            {
+            if (this->is_valid_data(bytes)) {
+                this->send_touch_(this->get_touch_point(bytes));
+            } else {
                 ESP_LOGW(TAG, "Invalid touch data received");
             }
         }
 
-        void TxUltimateTouch::dump_config()
-        {
-            ESP_LOGCONFIG(TAG, "Tx Ultimate Touch");
+        void TxUltimateTouch::dump_config() {
+            ESP_LOGCONFIG(TAG, "TX Ultimate Touch");
+            ESP_LOGCONFIG(TAG, "  Max position: %u", TOUCH_MAX_POSITION);
+            ESP_LOGCONFIG(TAG, "  Auto-release timeout: %u ms", AUTO_RELEASE_TIMEOUT);
+            ESP_LOGCONFIG(TAG, "  Long press timeout: %u ms", LONG_PRESS_TIMEOUT);
+            ESP_LOGCONFIG(TAG, "  Long press threshold: %u ms", LONG_PRESS_THRESHOLD);
+            ESP_LOGCONFIG(TAG, "  Debounce time: %u ms", DEBOUNCE_TIME_MS);
         }
 
-        void TxUltimateTouch::send_touch_(TouchPoint tp)
-        {
-            // Adaugă debouncing pentru a evita evenimente duplicate rapide
+        void TxUltimateTouch::send_touch_(TouchPoint tp) {
+            if (tp.x == INVALID_VALUE || tp.state == INVALID_VALUE) {
+                ESP_LOGW(TAG, "Ignoring invalid touch point (x=%u, state=%u)", tp.x, tp.state);
+                return;
+            }
+            
+            // Enhanced debouncing
             static unsigned long last_event_time = 0;
-            static int last_event_state = -1;
-            static int last_event_x = -1;
+            static uint8_t last_event_state = INVALID_VALUE;
+            static uint8_t last_event_x = INVALID_VALUE;
             
             unsigned long current_time = millis();
             
-            // Ignore duplicate events within 50ms
-            if (current_time - last_event_time < 50 && 
+            tp.state_str = this->get_state_string(tp.state);
+            
+            if (current_time - last_event_time < DEBOUNCE_TIME_MS && 
                 tp.state == last_event_state && 
-                tp.x == last_event_x)
-            {
+                tp.x == last_event_x) {
                 ESP_LOGV(TAG, "Debouncing duplicate event");
                 return;
             }
@@ -133,127 +153,197 @@ namespace esphome
             last_event_state = tp.state;
             last_event_x = tp.x;
 
-            switch (tp.state)
-            {
-            case TOUCH_STATE_RELEASE:
-                if (tp.x >= 17)
-                {
-                    tp.x = tp.x - 16;
-                    ESP_LOGD(TAG, "Long Press Release (x=%d)", tp.x);
-                    this->long_touch_release_trigger_.trigger(tp);
-                }
-                else
-                {
-                    ESP_LOGD(TAG, "Release (x=%d)", tp.x);
-                    this->release_trigger_.trigger(tp);
-                }
-                break;
+            // Always trigger universal event first
+            this->touch_event_trigger_.trigger(tp);
 
-            case TOUCH_STATE_PRESS:
-                ESP_LOGD(TAG, "Press (x=%d)", tp.x);
-                this->touch_trigger_.trigger(tp);
-                break;
+            // Handle state machine and specific events
+            switch (tp.state) {
+                case TOUCH_STATE_PRESS:
+                    if (tp.x <= TOUCH_MAX_POSITION) {
+                        ESP_LOGD(TAG, "Press at position %u", tp.x);
+                        this->touch_trigger_.trigger(tp);
+                        
+                        // Update state machine
+                        this->last_press_x_ = tp.x;
+                        this->transition_to_state(TOUCH_PRESSED);
+                    } else {
+                        ESP_LOGW(TAG, "Invalid press position: %u", tp.x);
+                    }
+                    break;
 
-            case TOUCH_STATE_SWIPE_LEFT:
-                ESP_LOGD(TAG, "Swipe Left (x=%d)", tp.x);
-                this->swipe_trigger_left_.trigger(tp);
-                break;
+                case TOUCH_STATE_RELEASE:
+                    this->handle_release_event(tp, current_time);
+                    break;
 
-            case TOUCH_STATE_SWIPE_RIGHT:
-                ESP_LOGD(TAG, "Swipe Right (x=%d)", tp.x);
-                this->swipe_trigger_right_.trigger(tp);
-                break;
+                case TOUCH_STATE_SWIPE_LEFT:
+                    ESP_LOGD(TAG, "Swipe Left at position %u", tp.x);
+                    this->swipe_trigger_left_.trigger(tp);
+                    this->transition_to_state(TOUCH_IDLE);
+                    break;
 
-            case TOUCH_STATE_ALL_FIELDS:
-                ESP_LOGD(TAG, "Full Touch Release");
-                this->full_touch_release_trigger_.trigger(tp);
-                break;
+                case TOUCH_STATE_SWIPE_RIGHT:
+                    ESP_LOGD(TAG, "Swipe Right at position %u", tp.x);
+                    this->swipe_trigger_right_.trigger(tp);
+                    this->transition_to_state(TOUCH_IDLE);
+                    break;
 
-            default:
-                ESP_LOGW(TAG, "Unknown touch state: %d", tp.state);
-                break;
+                case TOUCH_STATE_ALL_FIELDS:
+                    ESP_LOGD(TAG, "Multi Touch Release");
+                    this->full_touch_release_trigger_.trigger(tp);
+                    this->multi_touch_release_trigger_.trigger(tp);
+                    this->transition_to_state(TOUCH_IDLE);
+                    break;
+
+                default:
+                    ESP_LOGW(TAG, "Unknown touch state: %u (%s)", tp.state, tp.state_str.c_str());
+                    break;
             }
         }
 
-        bool TxUltimateTouch::is_valid_data(int bytes[])
-        {
-            // Verifică header-ul pachetului
-            if (!(bytes[0] == 170 && bytes[1] == 85 && bytes[2] == 1 && bytes[3] == 2))
-            {
-                ESP_LOGV(TAG, "Invalid packet header: %d %d %d %d", bytes[0], bytes[1], bytes[2], bytes[3]);
+        void TxUltimateTouch::handle_release_event(TouchPoint tp, unsigned long current_time) {
+            // Check for long press if we were in auto-released state
+            if (this->touch_state_ == TOUCH_AUTO_RELEASED) {
+                unsigned long total_press_time = current_time - this->state_start_time_ + AUTO_RELEASE_TIMEOUT;
+                
+                if (total_press_time >= LONG_PRESS_THRESHOLD) {
+                    ESP_LOGI(TAG, "Long press detected! Duration: %lums at position %u", total_press_time, this->last_press_x_);
+                    
+                    // Create long press event using original position
+                    TouchPoint long_press_tp = tp;
+                    long_press_tp.x = this->last_press_x_;
+                    long_press_tp.state_str = "LONG_PRESS_RELEASE";
+                    
+                    this->long_touch_release_trigger_.trigger(long_press_tp);
+                    
+                    // Simulate touch & release sequence
+                    this->simulate_touch_sequence(long_press_tp.x);
+                    this->transition_to_state(TOUCH_IDLE);
+                    return;
+                }
+            }
+            
+            // Handle hardware long press (with offset detection)
+            if (tp.x >= (LONG_PRESS_OFFSET + 1) && tp.x < (LONG_PRESS_OFFSET + TOUCH_MAX_POSITION + LONG_PRESS_OFFSET)) {
+                uint8_t adjusted_x = tp.x - LONG_PRESS_OFFSET;
+                tp.x = adjusted_x;
+                ESP_LOGD(TAG, "Hardware Long Press Release at position %u", tp.x);
+                this->long_touch_release_trigger_.trigger(tp);
+            } else if (tp.x <= TOUCH_MAX_POSITION) {
+                ESP_LOGD(TAG, "Release at position %u", tp.x);
+                this->release_trigger_.trigger(tp);
+            } else {
+                ESP_LOGW(TAG, "Invalid release position: %u", tp.x);
+            }
+            
+            this->transition_to_state(TOUCH_IDLE);
+        }
+
+        void TxUltimateTouch::simulate_touch_sequence(uint8_t position) {
+            ESP_LOGD(TAG, "Simulating touch & release sequence at position %u", position);
+            
+            TouchPoint sim_press;
+            sim_press.x = position;
+            sim_press.state = TOUCH_STATE_PRESS;
+            sim_press.state_str = "SIMULATED_PRESS";
+            
+            TouchPoint sim_release = sim_press;
+            sim_release.state = TOUCH_STATE_RELEASE;
+            sim_release.state_str = "SIMULATED_RELEASE";
+            
+            // Send simulated events
+            this->touch_trigger_.trigger(sim_press);
+            this->touch_event_trigger_.trigger(sim_press);
+            this->release_trigger_.trigger(sim_release);
+            this->touch_event_trigger_.trigger(sim_release);
+        }
+
+        bool TxUltimateTouch::is_valid_data(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) const {
+            // Check packet header
+            if (bytes[0] != HEADER_BYTE_1 || 
+                bytes[1] != HEADER_BYTE_2 || 
+                bytes[2] != PACKET_VERSION || 
+                bytes[3] != PACKET_OPCODE) {
+                ESP_LOGV(TAG, "Invalid packet header: %u %u %u %u", 
+                        bytes[0], bytes[1], bytes[2], bytes[3]);
                 return false;
             }
 
-            int state = get_touch_state(bytes);
+            uint8_t state = this->get_touch_state(bytes);
             if (state != TOUCH_STATE_PRESS &&
                 state != TOUCH_STATE_RELEASE &&
                 state != TOUCH_STATE_SWIPE_LEFT &&
                 state != TOUCH_STATE_SWIPE_RIGHT &&
-                state != TOUCH_STATE_ALL_FIELDS)
-            {
-                ESP_LOGV(TAG, "Invalid touch state: %d", state);
+                state != TOUCH_STATE_ALL_FIELDS) {
+                ESP_LOGV(TAG, "Invalid touch state: %u", state);
                 return false;
             }
 
-            // Pentru starea ALL_FIELDS, poziția poate fi diferită
-            if (bytes[6] < 0 && state != TOUCH_STATE_ALL_FIELDS)
-            {
-                ESP_LOGV(TAG, "Invalid position data: %d for state %d", bytes[6], state);
-                return false;
+            // Position validation - multi-touch events may have different position encoding
+            if (state != TOUCH_STATE_ALL_FIELDS) {
+                uint8_t x = this->get_x_touch_position(bytes);
+                // Allow positions up to LONG_PRESS_OFFSET + TOUCH_MAX_POSITION for hardware long presses
+                if (x > (LONG_PRESS_OFFSET + TOUCH_MAX_POSITION)) {
+                    ESP_LOGV(TAG, "Invalid position: %u for state %u", x, state);
+                    return false;
+                }
             }
 
             return true;
         }
 
-        int TxUltimateTouch::get_x_touch_position(int bytes[])
-        {
-            int state = bytes[4];
-            switch (state)
-            {
-            case TOUCH_STATE_RELEASE:
-                return bytes[5];
-                break;
+        uint8_t TxUltimateTouch::get_x_touch_position(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) const {
+            // Enhanced position detection from multiple implementations
+            switch (bytes[4]) {
+                case TOUCH_STATE_RELEASE:
+                case TOUCH_STATE_ALL_FIELDS:
+                    return bytes[5];
 
-            case TOUCH_STATE_ALL_FIELDS:
-                return bytes[5];
-                break;
+                case TOUCH_STATE_SWIPE_LEFT:
+                case TOUCH_STATE_SWIPE_RIGHT:
+                    // Advanced swipe position detection
+                    switch (bytes[5]) {
+                        case 12: // Scan right to left
+                            for (uint8_t i = TOUCH_MAX_POSITION; i > 0; i--) {
+                                if (i > 8
+                                    ? bytes[6] & (1 << (i - 9))
+                                    : bytes[7] & (1 << (i - 1))) {
+                                    return i;
+                                }
+                            }
+                            break;
+                        case 13: // Scan left to right
+                            for (uint8_t i = 1; i <= TOUCH_MAX_POSITION; i++) {
+                                if (i > 8
+                                    ? bytes[6] & (1 << (i - 9))
+                                    : bytes[7] & (1 << (i - 1))) {
+                                    return i;
+                                }
+                            }
+                            break;
+                    }
+                    return bytes[5];
 
-            case TOUCH_STATE_SWIPE_LEFT:
-                return bytes[5];
-                break;
-
-            case TOUCH_STATE_SWIPE_RIGHT:
-                return bytes[5];
-                break;
-
-            default:
-                return bytes[6];
-                break;
+                default:
+                    return bytes[6];
             }
         }
 
-        int TxUltimateTouch::get_touch_state(int bytes[])
-        {
-            int state = bytes[4];
+        uint8_t TxUltimateTouch::get_touch_state(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) const {
+            uint8_t state = bytes[4];
 
-            if (state == TOUCH_STATE_PRESS && bytes[5] != 0)
-            {
+            // State resolution logic from original implementations
+            if (state == TOUCH_STATE_PRESS && bytes[5] != 0) {
                 state = TOUCH_STATE_RELEASE;
             }
 
-            if (state == TOUCH_STATE_RELEASE && bytes[5] == TOUCH_STATE_ALL_FIELDS)
-            {
-                state = TOUCH_STATE_ALL_FIELDS;
+            if (state == TOUCH_STATE_RELEASE && (bytes[5] == TOUCH_STATE_ALL_FIELDS)) {
+                state = bytes[5];
             }
 
-            if (state == TOUCH_STATE_SWIPE)
-            {
-                if (bytes[5] == TOUCH_STATE_SWIPE_RIGHT)
-                {
+            if (state == TOUCH_STATE_SWIPE) {
+                if (bytes[5] == TOUCH_STATE_SWIPE_RIGHT) {
                     state = TOUCH_STATE_SWIPE_RIGHT;
-                }
-                else if (bytes[5] == TOUCH_STATE_SWIPE_LEFT)
-                {
+                } else if (bytes[5] == TOUCH_STATE_SWIPE_LEFT) {
                     state = TOUCH_STATE_SWIPE_LEFT;
                 }
             }
@@ -261,14 +351,32 @@ namespace esphome
             return state;
         }
 
-        TouchPoint TxUltimateTouch::get_touch_point(int bytes[])
-        {
+        TouchPoint TxUltimateTouch::get_touch_point(const std::array<uint8_t, UART_BUFFER_SIZE> &bytes) const {
             TouchPoint tp;
-
-            tp.x = get_x_touch_position(bytes);
-            tp.state = get_touch_state(bytes);
-
+            tp.x = this->get_x_touch_position(bytes);
+            tp.state = this->get_touch_state(bytes);
+            tp.state_str = this->get_state_string(tp.state);
+            
             return tp;
+        }
+
+        std::string TxUltimateTouch::get_state_string(uint8_t state) const {
+            switch (state) {
+                case TOUCH_STATE_RELEASE:
+                    return "RELEASE";
+                case TOUCH_STATE_PRESS:
+                    return "PRESS";
+                case TOUCH_STATE_SWIPE:
+                    return "SWIPE";
+                case TOUCH_STATE_ALL_FIELDS:
+                    return "MULTI_TOUCH";
+                case TOUCH_STATE_SWIPE_RIGHT:
+                    return "SWIPE_RIGHT";
+                case TOUCH_STATE_SWIPE_LEFT:
+                    return "SWIPE_LEFT";
+                default:
+                    return "UNKNOWN_" + std::to_string(state);
+            }
         }
 
     } // namespace tx_ultimate_touch

@@ -26,6 +26,12 @@ Modificări aduse:
 - indicatoarele de aprindere au culoare și intensitate diferită: default și când nightlight e pornit.
 - etc.
 
+v2.2 (atenție, modificări majore de comportament):
+
+- modificat complet .h și .cpp pentru filtrare input și introducerea în cod a detecției de buton blocat. La gesturi ne-liniare de swipe (ex. plecat dintr-un punct în altul și revenire în același punct) nu se trimite din FW touch-ului evenimentul de release, și întrerupătorul rămâne în stare necunoscută. A fost implementată funcția de stuck touch din acest motiv. (nu am văzut în niciun alt firmware tratată problema)
+- dacă la o secundă de la apăsarea unui buton nu există eventiment de release, se simulează trimiterea evenimentului automat - posibil buton blocat
+- dacă după această secundă există un release valid (se ia mâna de pe buton), înseamnă că butonul nu a fost blocat, așa că se retrimite evenimentul de touch & release pentru a reveni la starea inițială a releului din zona apăsată, iar release-ul mai lung de o secundă este tratat ca fiind long touch. Aici este introdus un disconfort, în sensul că la long touch, becul comandat de zona în care s-a produs atingerea se va stinge după o secundă și se va reaprinde la luarea mâinii de pe buton.
+
 Pentru detalii privind codul care stă la baza acestui proiect: <https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome>
 
 ## Funcție decuplată
