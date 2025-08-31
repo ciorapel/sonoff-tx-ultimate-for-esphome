@@ -7,3 +7,4 @@ secrets.yaml
 .esphome/*
 firmware/*
 build.sh
+yaml/*

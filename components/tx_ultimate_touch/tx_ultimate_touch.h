@@ -37,7 +37,7 @@ namespace esphome {
         // Timing Constants - SOLUȚIA HIBRIDĂ CU STATE MACHINE
         constexpr uint16_t PACKET_TIMEOUT_MS = 100;
         constexpr uint16_t DEBOUNCE_TIME_MS = 50;
-        constexpr uint16_t AUTO_RELEASE_TIMEOUT = 1000;        // Auto-release la 1000ms
+        constexpr uint16_t AUTO_RELEASE_TIMEOUT = 500;        // Auto-release la 700ms
         constexpr uint16_t LONG_PRESS_TIMEOUT = 3000;          // Timeout final la 3000ms (mai scurt)
         constexpr uint16_t LONG_PRESS_THRESHOLD = 1200;        // Pragul pentru long press (1200ms)
         
