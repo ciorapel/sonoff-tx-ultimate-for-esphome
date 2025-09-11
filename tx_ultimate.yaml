@@ -1,16 +1,19 @@
 substitutions:
-  name: intrerupator_default
-  friendly_name: "Intrerupator Default"
+  name: intrerupator_cap_pat_dan
+  friendly_name: "Intrerupator cap pat Dan"
   relay_count: "2"
   relay_2_internal: "false"
   relay_3_internal: "true"
-
+                            
   relay_1_coupled: "true"
   relay_2_coupled: "true"
   relay_3_coupled: "true"
 
   vibra_time: "150ms"
   button_on_time: "200ms"
+
+  sync_enabled: "false"
+  partner_mac: "AA:BB:CC:DD:EE:FF"
 
   button_brightness_default: "0.4"
   button_color_default: "{100,100,100}"
@@ -66,6 +69,7 @@ esphome:
     name: smarthomeyourself-crpl.tx_ultimate
     version: "2.2"
 
+
   on_boot:
     priority: -100
     then:
@@ -96,6 +100,8 @@ esp32:
   board: esp32dev
   framework:
     type: esp-idf
+    version: recommended
+
 
 logger:
   level: INFO
@@ -107,6 +113,7 @@ logger:
     tx_ultimate_touch: INFO
     uart_debug: WARN
     media_player: INFO
+    espnow: INFO
 
 api:
 
@@ -125,6 +132,48 @@ wifi:
 improv_serial:
 
 captive_portal:
+
+espnow:
+  peers:
+    - ${partner_mac}
+  auto_add_peer: false
+  enable_on_boot: true
+  on_receive:
+    then:
+      - lambda: |-
+          if (!${sync_enabled}) return;
+
+          std::string msg((const char*)data, size);
+
+          if (msg == "ALL_ON") {
+            if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+            if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+            if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+          }
+          else if (msg == "ALL_OFF") {
+            if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+            if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+            if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+          }
+          else if (msg == "L1_ON") {
+            if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+          }
+          else if (msg == "L1_OFF") {
+            if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+          }
+          else if (msg == "L2_ON") {
+            if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+          }
+          else if (msg == "L2_OFF") {
+            if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+          }
+          else if (msg == "L3_ON") {
+            if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+          }
+          else if (msg == "L3_OFF") {
+            if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+          }
+
 
 external_components:
   - source:
@@ -190,7 +239,7 @@ globals:
   - id: runtime_relay_1_coupled
     type: bool
     initial_value: ${relay_1_coupled}
-    restore_value: no  
+    restore_value: no
   - id: runtime_relay_2_coupled
     type: bool
     restore_value: no
@@ -340,6 +389,7 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     icon: "mdi:vibrate"
+
   - platform: template
     id: dummy_relay_1
     name: "Dummy L1"
@@ -349,9 +399,26 @@ switch:
     on_turn_on:
       then:
         - script.execute: refresh_led_default
+        - if:
+            condition:
+              lambda: 'return ${sync_enabled};'
+            then:
+              - logger.log: "ESP-NOW: Trimit Dummy L1 ON la partner"
+              - espnow.send:
+                  address: ${partner_mac}
+                  data: "L1_ON"
     on_turn_off:
       then:
         - script.execute: refresh_led_default
+        - if:
+            condition:
+              lambda: 'return ${sync_enabled};'
+            then:
+              - logger.log: "ESP-NOW: Trimit Dummy L1 OFF la partner"
+              - espnow.send:
+                  address: ${partner_mac}
+                  data: "L1_OFF"
+
   - platform: template
     id: dummy_relay_2
     name: "Dummy L2"
@@ -361,9 +428,26 @@ switch:
     on_turn_on:
       then:
         - script.execute: refresh_led_default
+        - if:
+            condition:
+              lambda: 'return ${sync_enabled};'
+            then:
+              - logger.log: "ESP-NOW: Trimit Dummy L2 ON la partner"
+              - espnow.send:
+                  address: ${partner_mac}
+                  data: "L2_ON"
     on_turn_off:
       then:
         - script.execute: refresh_led_default
+        - if:
+            condition:
+              lambda: 'return ${sync_enabled};'
+            then:
+              - logger.log: "ESP-NOW: Trimit Dummy L2 OFF la partner"
+              - espnow.send:
+                  address: ${partner_mac}
+                  data: "L2_OFF"
+
   - platform: template
     id: dummy_relay_3
     name: "Dummy L3"
@@ -373,9 +457,27 @@ switch:
     on_turn_on:
       then:
         - script.execute: refresh_led_default
+        - if:
+            condition:
+              lambda: 'return ${sync_enabled};'
+            then:
+              - logger.log: "ESP-NOW: Trimit Dummy L3 ON la partner"
+              - espnow.send:
+                  address: ${partner_mac}
+                  data: "L3_ON"
     on_turn_off:
       then:
         - script.execute: refresh_led_default
+        - if:
+            condition:
+              lambda: 'return ${sync_enabled};'
+            then:
+              - logger.log: "ESP-NOW: Trimit Dummy L3 OFF la partner"
+              - espnow.send:
+                  address: ${partner_mac}
+                  data: "L3_OFF"
+
+
   - platform: gpio
     id: relay_1
     name: "L1"
@@ -387,12 +489,29 @@ switch:
             lambda: "return id(runtime_relay_1_coupled);"
           then:
             - script.execute: refresh_led_default
+            - if:
+                condition:
+                  lambda: 'return ${sync_enabled};'
+                then:
+                  - logger.log: "ESP-NOW: Trimit L1 ON la partner"
+                  - espnow.send:
+                      address: ${partner_mac}
+                      data: "L1_ON"
     on_turn_off:
       - if:
           condition:
             lambda: "return id(runtime_relay_1_coupled);"
           then:
             - script.execute: refresh_led_default
+            - if:
+                condition:
+                  lambda: 'return ${sync_enabled};'
+                then:
+                  - logger.log: "ESP-NOW: Trimit L1 OFF la partner"
+                  - espnow.send:
+                      address: ${partner_mac}
+                      data: "L1_OFF"
+
   - platform: gpio
     id: relay_2
     name: "L2"
@@ -405,12 +524,29 @@ switch:
             lambda: "return id(runtime_relay_2_coupled);"
           then:
             - script.execute: refresh_led_default
+            - if:
+                condition:
+                  lambda: 'return ${sync_enabled};'
+                then:
+                  - logger.log: "ESP-NOW: Trimit L2 ON la partner"
+                  - espnow.send:
+                      address: ${partner_mac}
+                      data: "L2_ON"
     on_turn_off:
       - if:
           condition:
             lambda: "return id(runtime_relay_2_coupled);"
           then:
             - script.execute: refresh_led_default
+            - if:
+                condition:
+                  lambda: 'return ${sync_enabled};'
+                then:
+                  - logger.log: "ESP-NOW: Trimit L2 OFF la partner"
+                  - espnow.send:
+                      address: ${partner_mac}
+                      data: "L2_OFF"
+
   - platform: gpio
     id: relay_3
     name: "L3"
@@ -423,12 +559,29 @@ switch:
             lambda: "return id(runtime_relay_3_coupled);"
           then:
             - script.execute: refresh_led_default
+            - if:
+                condition:
+                  lambda: 'return ${sync_enabled};'
+                then:
+                  - logger.log: "ESP-NOW: Trimit L3 ON la partner"
+                  - espnow.send:
+                      address: ${partner_mac}
+                      data: "L3_ON"
     on_turn_off:
       - if:
           condition:
             lambda: "return id(runtime_relay_3_coupled);"
           then:
             - script.execute: refresh_led_default
+            - if:
+                condition:
+                  lambda: 'return ${sync_enabled};'
+                then:
+                  - logger.log: "ESP-NOW: Trimit L3 OFF la partner"
+                  - espnow.send:
+                      address: ${partner_mac}
+                      data: "L3_OFF"
+
   - platform: gpio
     id: vibra
     internal: True
@@ -701,46 +854,64 @@ tx_ultimate_touch:
     - binary_sensor.template.publish:
         id: multi_touch
         state: ON
-    
+
     - lambda: |-
         std::vector<bool> relay_states;
         std::vector<std::string> relay_names;
-        
+
         bool relay1_state = id(runtime_relay_1_coupled) ? id(relay_1).state : id(dummy_relay_1).state;
         relay_states.push_back(relay1_state);
         relay_names.push_back("relay_1");
-        
+
         if (${relay_count} >= 2 && !${relay_2_internal}) {
           bool relay2_state = id(runtime_relay_2_coupled) ? id(relay_2).state : id(dummy_relay_2).state;
           relay_states.push_back(relay2_state);
           relay_names.push_back("relay_2");
         }
-        
+
         if (${relay_count} >= 3 && !${relay_3_internal}) {
           bool relay3_state = id(runtime_relay_3_coupled) ? id(relay_3).state : id(dummy_relay_3).state;
           relay_states.push_back(relay3_state);
           relay_names.push_back("relay_3");
         }
-        
+
         bool all_on = true;
         bool any_on = false;
-        
+
         for (bool state : relay_states) {
           if (!state) all_on = false;
           if (state) any_on = true;
         }
-        
-        ESP_LOGD("multitouch", "Found %d non-internal relays, all_on: %d, any_on: %d", 
+
+        ESP_LOGD("multitouch", "Found %d non-internal relays, all_on: %d, any_on: %d",
                  relay_states.size(), all_on, any_on);
-        
+
         id(multitouch_action_turn_on) = !all_on;
-        
+
+    - if:
+        condition:
+          lambda: 'return ${sync_enabled};'
+        then:
+          - if:
+              condition:
+                lambda: "return id(multitouch_action_turn_on);"
+              then:
+                - logger.log: "ESP-NOW: Trimit ALL_ON la partner"
+                - espnow.send:
+                    address: ${partner_mac}
+                    data: "ALL_ON"
+              else:
+                - logger.log: "ESP-NOW: Trimit ALL_OFF la partner"  
+                - espnow.send:
+                    address: ${partner_mac}
+                    data: "ALL_OFF"
+
     - if:
         condition:
           lambda: "return id(multitouch_action_turn_on);"
         then:
           - logger.log: "MultiTouch: Aprind toate releele non-interne"
-          
+
           - if:
               condition:
                 lambda: "return id(runtime_relay_1_coupled);"
@@ -748,7 +919,7 @@ tx_ultimate_touch:
                 - switch.turn_on: relay_1
               else:
                 - switch.turn_on: dummy_relay_1
-          
+
           - if:
               condition:
                 lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
@@ -761,7 +932,7 @@ tx_ultimate_touch:
                       - switch.turn_on: relay_2
                     else:
                       - switch.turn_on: dummy_relay_2
-          
+
           - if:
               condition:
                 lambda: "return ${relay_count} >= 3 && !${relay_3_internal};"
@@ -775,7 +946,7 @@ tx_ultimate_touch:
                       - switch.turn_on: dummy_relay_3
         else:
           - logger.log: "MultiTouch: Sting toate releele non-interne"
-          
+
           - if:
               condition:
                 lambda: "return id(runtime_relay_1_coupled);"
@@ -783,7 +954,7 @@ tx_ultimate_touch:
                 - switch.turn_off: relay_1
               else:
                 - switch.turn_off: dummy_relay_1
-          
+
           - if:
               condition:
                 lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
@@ -796,7 +967,7 @@ tx_ultimate_touch:
                       - switch.turn_off: relay_2
                     else:
                       - switch.turn_off: dummy_relay_2
-          
+
           - if:
               condition:
                 lambda: "return ${relay_count} >= 3 && !${relay_3_internal};"
