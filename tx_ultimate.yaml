@@ -9,10 +9,6 @@ substitutions:
   relay_2_coupled: "true"
   relay_3_coupled: "true"
                             
-  relay_1_coupled: "true"
-  relay_2_coupled: "true"
-  relay_3_coupled: "true"
-
   vibra_time: "150ms"
   button_on_time: "200ms"
 
