@@ -23,7 +23,7 @@ Proiect personalizat pentru **Sonoff TX**, bazat pe [SmartHome-yourself/sonoff-t
 - ⚡ Adăugare sincronizare prin ESP-Now între întrerupătoare.
 - 🧹 Filtrare completă a input-ului și detectare buton blocat  
 - 🖐️ Funcția **stuck touch** pentru gesturi ne-liniare (swipe incomplet sau revenire la punctul inițial)  
-- ⏱️ Generare automată a evenimentului de release după 1 secundă dacă nu este detectat  
+- ⏱️ Generare automată a evenimentului de release după 500ms dacă nu este detectat  
 - 🔄 Gestionarea corectă a long touch-urilor și readucerea releului la starea inițială  
 
 ---
