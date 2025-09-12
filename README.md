@@ -63,3 +63,8 @@ substitutions:
 
 packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
+```
+
+## TODO
+
+- dezactivare failback hotspot (dacă pică routerul principal se creează foarte multe hotspoturi, ceea ce generează interferențe puternice pe canalul WIFI și duce la pierderea a 75% din pachetele de sincronizare espnow); deocamdată rămâne activat din motive de debugging și update firmware OTA.
