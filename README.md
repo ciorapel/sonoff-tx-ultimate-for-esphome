@@ -65,6 +65,32 @@ packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
 ```
 
-## TODO
+## ⚙️ Configurări avansate
 
-- dezactivare failback hotspot (dacă pică routerul principal se creează foarte multe hotspoturi, ceea ce generează interferențe puternice pe canalul WIFI și duce la pierderea a 75% din pachetele de sincronizare espnow); deocamdată rămâne activat din motive de debugging și update firmware OTA.
+### Sincronizare ESP-NOW
+
+```yaml
+sync_enabled: "true"  # activează sincronizarea
+partner_mac: "AA:BB:CC:DD:EE:FF"  # MAC-ul întrerupătorului pereche
+```
+
+```markdown
+### 🔄 Cum funcționează sincronizarea
+- **Coupled true**: touch-ul controlează direct releul fizic care apare în HA și cele dummy nu apar
+- **Coupled false**: touch-ul controlează doar dummy relay care acum sunt vizibile în HA, releul fizic rămâne independent și accesibil și el din HA
+- **Internal true**: butonul nu apare în HA (pentru întrerupătoare cu mai puține poziții)
+```
+
+```markdown
+### 💡 Exemplu practic
+**Întrerupător 2 poziții cu L2 decuplat:**
+- `relay_2_coupled: "false"` → în HA vor apărea:
+  - `L2` (releu fizic - controlat doar din HA)
+  - `Dummy L2` (releu virtual - controlat prin touch)
+```
+
+```markdown
+## 📋 TODO
+
+- [ ] dezactivare failback hotspot (dacă pică routerul principal se creează foarte multe hotspoturi, ceea ce generează interferențe puternice pe canalul WIFI și duce la pierderea a 75% din pachetele de sincronizare espnow); deocamdată rămâne activat din motive de debugging și update firmware OTA.
+```
