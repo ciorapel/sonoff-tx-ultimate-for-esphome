@@ -142,11 +142,10 @@ espnow:
     then:
       - if:
           condition:
-            lambda: 'return id(sync_enabled);'
+            lambda: 'return ${sync_enabled};'
           then:
             - logger.log: "Sync disabled temporarily to process incoming ESP-NOW message"
-            - lambda: |-
-                id(sync_enabled) = false;
+            - lambda: 'return ${sync_enabled};'
             - lambda: |-
                 std::string msg((const char*)data, size);
 
@@ -179,8 +178,7 @@ espnow:
                   if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
                 }
             - delay: 50ms
-            - lambda: |-
-                id(sync_enabled) = true;
+            - lambda: 'return ${sync_enabled};'
             - logger.log: "Sync enabled again after processing"
 
 
