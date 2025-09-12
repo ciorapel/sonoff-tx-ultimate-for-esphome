@@ -124,7 +124,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
-  reboot_timeout: 15m
+  reboot_timeout: 15min
 
   ap:
     password: "123456789"
