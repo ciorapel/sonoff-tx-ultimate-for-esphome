@@ -19,12 +19,8 @@ Proiect personalizat pentru **Sonoff TX**, bazat pe [SmartHome-yourself/sonoff-t
 - ✋ Long touch: toggle nightlight  
 - ⚙️ Optimizări C pentru apăsări scurte, prevenind pierderea evenimentelor de release  
 - 🔕 Dezactivarea vibrației separat de DND  
-- 💡 Indicatorii de aprindere au culoare și intensitate diferită în funcție de starea nightlight  
-
----
-
-## 🆕 v2.2 – Modificări majore
-
+- 💡 Indicatorii de aprindere au culoare și intensitate diferită în funcție de starea nightlight
+- ⚡ Adăugare sincronizare prin ESP-Now între întrerupătoare.
 - 🧹 Filtrare completă a input-ului și detectare buton blocat  
 - 🖐️ Funcția **stuck touch** pentru gesturi ne-liniare (swipe incomplet sau revenire la punctul inițial)  
 - ⏱️ Generare automată a evenimentului de release după 1 secundă dacă nu este detectat  
@@ -54,13 +50,16 @@ Permite folosirea touch-ului independent de releele interne.
 substitutions:
   name: nume_intrerupator
   friendly_name: "Nume intrerupator"
-  relay_count: "3" # numărul de poziții ale întrerupătorului
+  relay_count: "2" # numărul de poziții ale întrerupătorului
   relay_2_internal: "false" # setează ”true” dacă întrerupătorul are doar o poziție
-  relay_3_internal: "false" # setează ”true” dacă întrerupătorul are doar două poziții
+  relay_3_internal: "true" # setează ”true” dacă întrerupătorul are doar două poziții
                             
   relay_1_coupled: "true" # true = normal, false = decuplat
   relay_2_coupled: "true"
   relay_3_coupled: "true"
+
+  sync_enabled: "false"
+  partner_mac: "30:C9:22:FD:F7:7C"
 
 packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main

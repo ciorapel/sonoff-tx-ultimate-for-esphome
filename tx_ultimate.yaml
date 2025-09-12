@@ -1,9 +1,13 @@
 substitutions:
-  name: intrerupator_cap_pat_dan
-  friendly_name: "Intrerupator cap pat Dan"
+  name: intrerupator_default
+  friendly_name: "Intrerupator default"
   relay_count: "2"
   relay_2_internal: "false"
   relay_3_internal: "true"
+                            
+  relay_1_coupled: "true"
+  relay_2_coupled: "true"
+  relay_3_coupled: "true"
                             
   relay_1_coupled: "true"
   relay_2_coupled: "true"
@@ -13,7 +17,7 @@ substitutions:
   button_on_time: "200ms"
 
   sync_enabled: "false"
-  partner_mac: "AA:BB:CC:DD:EE:FF"
+  partner_mac: "30:C9:22:FD:F7:7C"
 
   button_brightness_default: "0.4"
   button_color_default: "{100,100,100}"
@@ -104,16 +108,16 @@ esp32:
 
 
 logger:
-  level: INFO
+  level: WARN
   logs:
     binary_sensor: WARN
     light: WARN
     script: WARN
     switch: WARN
-    tx_ultimate_touch: INFO
+    tx_ultimate_touch: WARN
     uart_debug: WARN
-    media_player: INFO
-    espnow: INFO
+    media_player: WARN
+    espnow: WARN
 
 api:
 
@@ -124,7 +128,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
-  reboot_timeout: 0s
+  reboot_timeout: 15m
 
   ap:
     password: "123456789"
@@ -140,39 +144,48 @@ espnow:
   enable_on_boot: true
   on_receive:
     then:
-      - lambda: |-
-          if (!${sync_enabled}) return;
+      - if:
+          condition:
+            lambda: 'return id(sync_enabled);'
+          then:
+            - logger.log: "Sync disabled temporarily to process incoming ESP-NOW message"
+            - lambda: |-
+                id(sync_enabled) = false;
+            - lambda: |-
+                std::string msg((const char*)data, size);
 
-          std::string msg((const char*)data, size);
-
-          if (msg == "ALL_ON") {
-            if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
-            if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
-            if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
-          }
-          else if (msg == "ALL_OFF") {
-            if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
-            if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
-            if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
-          }
-          else if (msg == "L1_ON") {
-            if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
-          }
-          else if (msg == "L1_OFF") {
-            if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
-          }
-          else if (msg == "L2_ON") {
-            if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
-          }
-          else if (msg == "L2_OFF") {
-            if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
-          }
-          else if (msg == "L3_ON") {
-            if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
-          }
-          else if (msg == "L3_OFF") {
-            if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
-          }
+                if (msg == "ALL_ON") {
+                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+                }
+                else if (msg == "ALL_OFF") {
+                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+                }
+                else if (msg == "L1_ON") {
+                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+                }
+                else if (msg == "L1_OFF") {
+                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+                }
+                else if (msg == "L2_ON") {
+                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+                }
+                else if (msg == "L2_OFF") {
+                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+                }
+                else if (msg == "L3_ON") {
+                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+                }
+                else if (msg == "L3_OFF") {
+                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+                }
+            - delay: 50ms
+            - lambda: |-
+                id(sync_enabled) = true;
+            - logger.log: "Sync enabled again after processing"
 
 
 external_components:
