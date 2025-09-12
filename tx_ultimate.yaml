@@ -204,7 +204,7 @@ globals:
   - id: sync_enabled
     type: bool
     restore_value: no
-    initial_value: false  
+    initial_value: "false"  
   - id: button_brightness
     type: float
     restore_value: no
