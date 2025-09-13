@@ -1,9 +1,9 @@
 substitutions:
   name: intrerupator_default
   friendly_name: "Intrerupator default"
-  relay_count: "2"
+  relay_count: "3"
   relay_2_internal: "false"
-  relay_3_internal: "true"
+  relay_3_internal: "false"
                             
   relay_1_coupled: "true"
   relay_2_coupled: "true"
@@ -13,7 +13,7 @@ substitutions:
   button_on_time: "200ms"
 
   sync_enabled: "false"
-  partner_mac: "30:C9:22:FD:F7:7C"
+  partner_mac: "30:c9:22:fd:f7:38"
 
   button_brightness_default: "0.4"
   button_color_default: "{100,100,100}"
@@ -133,201 +133,62 @@ improv_serial:
 
 captive_portal:
 
-espnow:
-  peers:
-    - ${partner_mac}
-  auto_add_peer: false
-  enable_on_boot: true
-  on_receive:
-    then:
-      - if:
-          condition:
-            lambda: 'return id(sync_enabled);'
-          then:
-            - logger.log: "Processing incoming ESP-NOW message"
-            - lambda: |-
-                std::string msg((const char*)data, size);
-                ESP_LOGD("espnow", "Received message: %s", msg.c_str());
+on_receive:
+  then:
+    - if:
+        condition:
+          and:
+            - lambda: 'return ${sync_enabled};'
+            - binary_sensor.is_off: sync_enabled_bounce
+        then:
+          - logger.log: "sync_enabled_bounce turned ON"
+          - binary_sensor.template.publish:
+              id: sync_enabled_bounce
+              state: ON
+          - lambda: |-
+              std::string msg((const char*)data, size);  
 
-                if (msg == "ALL_ON") {
-                  // Relay 1
-                  bool current_state_1 = id(runtime_relay_1_coupled) ? 
-                                        id(relay_1).state : 
-                                        id(dummy_relay_1).state;
-                  if (!current_state_1) {
-                    ESP_LOGD("espnow", "ALL_ON: Turning on relay 1");
-                    if (id(runtime_relay_1_coupled)) 
-                      id(relay_1).turn_on(); 
-                    else 
-                      id(dummy_relay_1).turn_on();
-                  }
-
-                  // Relay 2 (dacă există și nu e internal)
-                  if (${relay_count} >= 2) {
-                    bool current_state_2 = id(runtime_relay_2_coupled) ? 
-                                          id(relay_2).state : 
-                                          id(dummy_relay_2).state;
-                    if (!current_state_2) {
-                      ESP_LOGD("espnow", "ALL_ON: Turning on relay 2");
-                      if (id(runtime_relay_2_coupled)) 
-                        id(relay_2).turn_on(); 
-                      else 
-                        id(dummy_relay_2).turn_on();
-                    }
-                  }
-
-                  // Relay 3 (dacă există și nu e internal)
-                  if (${relay_count} >= 3) {
-                    bool current_state_3 = id(runtime_relay_3_coupled) ? 
-                                          id(relay_3).state : 
-                                          id(dummy_relay_3).state;
-                    if (!current_state_3) {
-                      ESP_LOGD("espnow", "ALL_ON: Turning on relay 3");
-                      if (id(runtime_relay_3_coupled)) 
-                        id(relay_3).turn_on(); 
-                      else 
-                        id(dummy_relay_3).turn_on();
-                    }
-                  }
-                }
-                
-                else if (msg == "ALL_OFF") {
-                  // Relay 1
-                  bool current_state_1 = id(runtime_relay_1_coupled) ? 
-                                        id(relay_1).state : 
-                                        id(dummy_relay_1).state;
-                  if (current_state_1) {
-                    ESP_LOGD("espnow", "ALL_OFF: Turning off relay 1");
-                    if (id(runtime_relay_1_coupled)) 
-                      id(relay_1).turn_off(); 
-                    else 
-                      id(dummy_relay_1).turn_off();
-                  }
-
-                  // Relay 2 (dacă există și nu e internal)
-                  if (${relay_count} >= 2) {
-                    bool current_state_2 = id(runtime_relay_2_coupled) ? 
-                                          id(relay_2).state : 
-                                          id(dummy_relay_2).state;
-                    if (current_state_2) {
-                      ESP_LOGD("espnow", "ALL_OFF: Turning off relay 2");
-                      if (id(runtime_relay_2_coupled)) 
-                        id(relay_2).turn_off(); 
-                      else 
-                        id(dummy_relay_2).turn_off();
-                    }
-                  }
-
-                  // Relay 3 (dacă există și nu e internal)
-                  if (${relay_count} >= 3) {
-                    bool current_state_3 = id(runtime_relay_3_coupled) ? 
-                                          id(relay_3).state : 
-                                          id(dummy_relay_3).state;
-                    if (current_state_3) {
-                      ESP_LOGD("espnow", "ALL_OFF: Turning off relay 3");
-                      if (id(runtime_relay_3_coupled)) 
-                        id(relay_3).turn_off(); 
-                      else 
-                        id(dummy_relay_3).turn_off();
-                    }
-                  }
-                }
-                
-                else if (msg == "L1_ON") {
-                  bool current_state = id(runtime_relay_1_coupled) ? 
-                                      id(relay_1).state : 
-                                      id(dummy_relay_1).state;
-                  if (!current_state) {
-                    ESP_LOGD("espnow", "L1_ON: Turning on relay 1 (current: %d)", current_state);
-                    if (id(runtime_relay_1_coupled)) 
-                      id(relay_1).turn_on(); 
-                    else 
-                      id(dummy_relay_1).turn_on();
-                  } else {
-                    ESP_LOGD("espnow", "L1_ON: Relay 1 already ON, skipping");
-                  }
-                }
-                
-                else if (msg == "L1_OFF") {
-                  bool current_state = id(runtime_relay_1_coupled) ? 
-                                      id(relay_1).state : 
-                                      id(dummy_relay_1).state;
-                  if (current_state) {
-                    ESP_LOGD("espnow", "L1_OFF: Turning off relay 1 (current: %d)", current_state);
-                    if (id(runtime_relay_1_coupled)) 
-                      id(relay_1).turn_off(); 
-                    else 
-                      id(dummy_relay_1).turn_off();
-                  } else {
-                    ESP_LOGD("espnow", "L1_OFF: Relay 1 already OFF, skipping");
-                  }
-                }
-                
-                else if (msg == "L2_ON") {
-                  bool current_state = id(runtime_relay_2_coupled) ? 
-                                      id(relay_2).state : 
-                                      id(dummy_relay_2).state;
-                  if (!current_state) {
-                    ESP_LOGD("espnow", "L2_ON: Turning on relay 2 (current: %d)", current_state);
-                    if (id(runtime_relay_2_coupled)) 
-                      id(relay_2).turn_on(); 
-                    else 
-                      id(dummy_relay_2).turn_on();
-                  } else {
-                    ESP_LOGD("espnow", "L2_ON: Relay 2 already ON, skipping");
-                  }
-                }
-                
-                else if (msg == "L2_OFF") {
-                  bool current_state = id(runtime_relay_2_coupled) ? 
-                                      id(relay_2).state : 
-                                      id(dummy_relay_2).state;
-                  if (current_state) {
-                    ESP_LOGD("espnow", "L2_OFF: Turning off relay 2 (current: %d)", current_state);
-                    if (id(runtime_relay_2_coupled)) 
-                      id(relay_2).turn_off(); 
-                    else 
-                      id(dummy_relay_2).turn_off();
-                  } else {
-                    ESP_LOGD("espnow", "L2_OFF: Relay 2 already OFF, skipping");
-                  }
-                }
-                
-                else if (msg == "L3_ON") {
-                  bool current_state = id(runtime_relay_3_coupled) ? 
-                                      id(relay_3).state : 
-                                      id(dummy_relay_3).state;
-                  if (!current_state) {
-                    ESP_LOGD("espnow", "L3_ON: Turning on relay 3 (current: %d)", current_state);
-                    if (id(runtime_relay_3_coupled)) 
-                      id(relay_3).turn_on(); 
-                    else 
-                      id(dummy_relay_3).turn_on();
-                  } else {
-                    ESP_LOGD("espnow", "L3_ON: Relay 3 already ON, skipping");
-                  }
-                }
-                
-                else if (msg == "L3_OFF") {
-                  bool current_state = id(runtime_relay_3_coupled) ? 
-                                      id(relay_3).state : 
-                                      id(dummy_relay_3).state;
-                  if (current_state) {
-                    ESP_LOGD("espnow", "L3_OFF: Turning off relay 3 (current: %d)", current_state);
-                    if (id(runtime_relay_3_coupled)) 
-                      id(relay_3).turn_off(); 
-                    else 
-                      id(dummy_relay_3).turn_off();
-                  } else {
-                    ESP_LOGD("espnow", "L3_OFF: Relay 3 already OFF, skipping");
-                  }
-                }
-                
-                else {
-                  ESP_LOGW("espnow", "Unknown message received: %s", msg.c_str());
-                }
-            - logger.log: "ESP-NOW message processing complete"
-
+              if (msg == "ALL_ON") {
+                ESP_LOGD("espnow", "ALL_ON received");
+                if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+                if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+                if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+              }
+              else if (msg == "ALL_OFF") {
+                ESP_LOGD("espnow", "ALL_OFF received");
+                if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+                if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+                if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+              }
+              else if (msg == "L1_ON") {
+                ESP_LOGD("espnow", "L1_ON received");
+                if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+              }
+              else if (msg == "L1_OFF") {
+                ESP_LOGD("espnow", "L1_OFF received");
+                if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+              }
+              else if (msg == "L2_ON") {
+                ESP_LOGD("espnow", "L2_ON received");
+                if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+              }
+              else if (msg == "L2_OFF") {
+                ESP_LOGD("espnow", "L2_OFF received");
+                if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+              }
+              else if (msg == "L3_ON") {
+                ESP_LOGD("espnow", "L3_ON received");
+                if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+              }
+              else if (msg == "L3_OFF") {
+                ESP_LOGD("espnow", "L3_OFF received");
+                if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+              }
+          - delay: 200ms
+          - logger.log: "sync_enabled_bounce turned OFF"
+          - binary_sensor.template.publish:
+              id: sync_enabled_bounce
+              state: OFF
 
 external_components:
   - source:
@@ -336,11 +197,6 @@ external_components:
       ref: main
     components: [tx_ultimate_touch]
     refresh: 1d
-  # - source:
-  #     type: local
-  #     path: components
-  #   components: [tx_ultimate_touch]
-  #   refresh: 0s
 
 preferences:
   flash_write_interval: 5min
@@ -416,6 +272,10 @@ globals:
     initial_value: "true"
 
 binary_sensor:
+  - platform: template
+    name: "Sync enabled"
+    id: sync_enabled_bounce
+    internal: true
   - platform: status
     name: "Connection Status"
     id: connection_status
@@ -559,7 +419,9 @@ switch:
         - script.execute: refresh_led_default
         - if:
             condition:
-              lambda: 'return ${sync_enabled};'
+              and:
+                - lambda: 'return ${sync_enabled};'
+                - binary_sensor.is_off: sync_enabled_bounce 
             then:
               - logger.log: "ESP-NOW: Trimit Dummy L1 ON la partner"
               - espnow.send:
@@ -570,7 +432,9 @@ switch:
         - script.execute: refresh_led_default
         - if:
             condition:
-              lambda: 'return ${sync_enabled};'
+              and:
+                - lambda: 'return ${sync_enabled};'
+                - binary_sensor.is_off: sync_enabled_bounce
             then:
               - logger.log: "ESP-NOW: Trimit Dummy L1 OFF la partner"
               - espnow.send:
@@ -588,7 +452,9 @@ switch:
         - script.execute: refresh_led_default
         - if:
             condition:
-              lambda: 'return ${sync_enabled};'
+              and:
+                - lambda: 'return ${sync_enabled};'
+                - binary_sensor.is_off: sync_enabled_bounce
             then:
               - logger.log: "ESP-NOW: Trimit Dummy L2 ON la partner"
               - espnow.send:
@@ -599,7 +465,9 @@ switch:
         - script.execute: refresh_led_default
         - if:
             condition:
-              lambda: 'return ${sync_enabled};'
+              and:
+                - lambda: 'return ${sync_enabled};'
+                - binary_sensor.is_off: sync_enabled_bounce
             then:
               - logger.log: "ESP-NOW: Trimit Dummy L2 OFF la partner"
               - espnow.send:
@@ -617,7 +485,9 @@ switch:
         - script.execute: refresh_led_default
         - if:
             condition:
-              lambda: 'return ${sync_enabled};'
+              and:
+                - lambda: 'return ${sync_enabled};'
+                - binary_sensor.is_off: sync_enabled_bounce
             then:
               - logger.log: "ESP-NOW: Trimit Dummy L3 ON la partner"
               - espnow.send:
@@ -628,7 +498,9 @@ switch:
         - script.execute: refresh_led_default
         - if:
             condition:
-              lambda: 'return ${sync_enabled};'
+              and:
+                - lambda: 'return ${sync_enabled};'
+                - binary_sensor.is_off: sync_enabled_bounce
             then:
               - logger.log: "ESP-NOW: Trimit Dummy L3 OFF la partner"
               - espnow.send:
@@ -649,7 +521,9 @@ switch:
             - script.execute: refresh_led_default
             - if:
                 condition:
-                  lambda: 'return ${sync_enabled};'
+                  and:
+                    - lambda: 'return ${sync_enabled};'
+                    - binary_sensor.is_off: sync_enabled_bounce
                 then:
                   - logger.log: "ESP-NOW: Trimit L1 ON la partner"
                   - espnow.send:
@@ -663,7 +537,9 @@ switch:
             - script.execute: refresh_led_default
             - if:
                 condition:
-                  lambda: 'return ${sync_enabled};'
+                  and:
+                    - lambda: 'return ${sync_enabled};'
+                    - binary_sensor.is_off: sync_enabled_bounce
                 then:
                   - logger.log: "ESP-NOW: Trimit L1 OFF la partner"
                   - espnow.send:
@@ -684,7 +560,9 @@ switch:
             - script.execute: refresh_led_default
             - if:
                 condition:
-                  lambda: 'return ${sync_enabled};'
+                  and:
+                    - lambda: 'return ${sync_enabled};'
+                    - binary_sensor.is_off: sync_enabled_bounce
                 then:
                   - logger.log: "ESP-NOW: Trimit L2 ON la partner"
                   - espnow.send:
@@ -698,7 +576,9 @@ switch:
             - script.execute: refresh_led_default
             - if:
                 condition:
-                  lambda: 'return ${sync_enabled};'
+                  and:
+                    - lambda: 'return ${sync_enabled};'
+                    - binary_sensor.is_off: sync_enabled_bounce
                 then:
                   - logger.log: "ESP-NOW: Trimit L2 OFF la partner"
                   - espnow.send:
@@ -719,7 +599,9 @@ switch:
             - script.execute: refresh_led_default
             - if:
                 condition:
-                  lambda: 'return ${sync_enabled};'
+                  and:
+                    - lambda: 'return ${sync_enabled};'
+                    - binary_sensor.is_off: sync_enabled_bounce
                 then:
                   - logger.log: "ESP-NOW: Trimit L3 ON la partner"
                   - espnow.send:
@@ -733,7 +615,9 @@ switch:
             - script.execute: refresh_led_default
             - if:
                 condition:
-                  lambda: 'return ${sync_enabled};'
+                  and:
+                    - lambda: 'return ${sync_enabled};'
+                    - binary_sensor.is_off: sync_enabled_bounce
                 then:
                   - logger.log: "ESP-NOW: Trimit L3 OFF la partner"
                   - espnow.send:
