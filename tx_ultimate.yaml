@@ -12,7 +12,7 @@ substitutions:
   sync_enabled: "false"
   partner_mac: "30:c9:22:fd:f7:38"
 
-  // Setări mai avansate - recomand atenție la modificare
+  # Setări mai avansate - recomand atenție la modificare
   vibra_time: "150ms"
   button_on_time: "200ms"
 
@@ -45,7 +45,7 @@ substitutions:
   swipe_right_color: "{100,70,0}"
   swipe_right_effect: "Pulse"
 
-// Setari hardware - nu modifica dacă nu știi ce faci
+# Setari hardware - nu modifica dacă nu știi ce faci
 
   relay_1_pin: GPIO18
   relay_2_pin: GPIO17
@@ -60,7 +60,7 @@ substitutions:
   touchpanel_power_pin: GPIO5
   led_pin: GPIO13
 
-// Cod - nu modifica dacă nu știi ce faci
+# Cod - nu modifica dacă nu știi ce faci
 i2s_audio:
   - id: if_i2s_audio
     i2s_bclk_pin: GPIO2
