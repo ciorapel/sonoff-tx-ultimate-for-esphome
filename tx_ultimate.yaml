@@ -8,12 +8,13 @@ substitutions:
   relay_1_coupled: "true"
   relay_2_coupled: "true"
   relay_3_coupled: "true"
-                            
-  vibra_time: "150ms"
-  button_on_time: "200ms"
 
   sync_enabled: "false"
   partner_mac: "30:c9:22:fd:f7:38"
+
+  // Setări mai avansate - recomand atenție la modificare
+  vibra_time: "150ms"
+  button_on_time: "200ms"
 
   button_brightness_default: "0.4"
   button_color_default: "{100,100,100}"
@@ -44,6 +45,8 @@ substitutions:
   swipe_right_color: "{100,70,0}"
   swipe_right_effect: "Pulse"
 
+// Setari hardware - nu modifica dacă nu știi ce faci
+
   relay_1_pin: GPIO18
   relay_2_pin: GPIO17
   relay_3_pin: GPIO27
@@ -57,6 +60,7 @@ substitutions:
   touchpanel_power_pin: GPIO5
   led_pin: GPIO13
 
+// Cod - nu modifica dacă nu știi ce faci
 i2s_audio:
   - id: if_i2s_audio
     i2s_bclk_pin: GPIO2
@@ -133,62 +137,66 @@ improv_serial:
 
 captive_portal:
 
-on_receive:
-  then:
-    - if:
-        condition:
-          and:
-            - lambda: 'return ${sync_enabled};'
-            - binary_sensor.is_off: sync_enabled_bounce
-        then:
-          - logger.log: "sync_enabled_bounce turned ON"
-          - binary_sensor.template.publish:
-              id: sync_enabled_bounce
-              state: ON
-          - lambda: |-
-              std::string msg((const char*)data, size);  
+espnow:
+  peers:
+    - ${partner_mac}
+  auto_add_peer: false
+  enable_on_boot: true
+  on_receive:
+    then:
+      - if:
+          condition:
+            and:
+              - lambda: 'return ${sync_enabled};'
+              - binary_sensor.is_off: sync_enabled_bounce
+          then:
+            - binary_sensor.template.publish:
+                id: sync_enabled_bounce
+                state: ON
+            - lambda: |-
+                std::string msg((const char*)data, size);  
 
-              if (msg == "ALL_ON") {
-                ESP_LOGD("espnow", "ALL_ON received");
-                if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
-                if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
-                if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
-              }
-              else if (msg == "ALL_OFF") {
-                ESP_LOGD("espnow", "ALL_OFF received");
-                if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
-                if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
-                if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
-              }
-              else if (msg == "L1_ON") {
-                ESP_LOGD("espnow", "L1_ON received");
-                if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
-              }
-              else if (msg == "L1_OFF") {
-                ESP_LOGD("espnow", "L1_OFF received");
-                if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
-              }
-              else if (msg == "L2_ON") {
-                ESP_LOGD("espnow", "L2_ON received");
-                if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
-              }
-              else if (msg == "L2_OFF") {
-                ESP_LOGD("espnow", "L2_OFF received");
-                if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
-              }
-              else if (msg == "L3_ON") {
-                ESP_LOGD("espnow", "L3_ON received");
-                if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
-              }
-              else if (msg == "L3_OFF") {
-                ESP_LOGD("espnow", "L3_OFF received");
-                if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
-              }
-          - delay: 200ms
-          - logger.log: "sync_enabled_bounce turned OFF"
-          - binary_sensor.template.publish:
-              id: sync_enabled_bounce
-              state: OFF
+                if (msg == "ALL_ON") {
+                  ESP_LOGD("espnow", "ALL_ON received");
+                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+                }
+                else if (msg == "ALL_OFF") {
+                  ESP_LOGD("espnow", "ALL_OFF received");
+                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+                }
+                else if (msg == "L1_ON") {
+                  ESP_LOGD("espnow", "L1_ON received");
+                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+                }
+                else if (msg == "L1_OFF") {
+                  ESP_LOGD("espnow", "L1_OFF received");
+                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+                }
+                else if (msg == "L2_ON") {
+                  ESP_LOGD("espnow", "L2_ON received");
+                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+                }
+                else if (msg == "L2_OFF") {
+                  ESP_LOGD("espnow", "L2_OFF received");
+                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+                }
+                else if (msg == "L3_ON") {
+                  ESP_LOGD("espnow", "L3_ON received");
+                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+                }
+                else if (msg == "L3_OFF") {
+                  ESP_LOGD("espnow", "L3_OFF received");
+                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+                }
+            - delay: 200ms
+            - binary_sensor.template.publish:
+                id: sync_enabled_bounce
+                state: OFF
+
 
 external_components:
   - source:
