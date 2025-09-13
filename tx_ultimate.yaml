@@ -144,44 +144,189 @@ espnow:
           condition:
             lambda: 'return id(sync_enabled);'
           then:
-            - logger.log: "Sync disabled temporarily to process incoming ESP-NOW message"
-            - lambda: |-
-                id(sync_enabled) = false;
+            - logger.log: "Processing incoming ESP-NOW message"
             - lambda: |-
                 std::string msg((const char*)data, size);
+                ESP_LOGD("espnow", "Received message: %s", msg.c_str());
 
                 if (msg == "ALL_ON") {
-                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
-                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
-                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+                  // Relay 1
+                  bool current_state_1 = id(runtime_relay_1_coupled) ? 
+                                        id(relay_1).state : 
+                                        id(dummy_relay_1).state;
+                  if (!current_state_1) {
+                    ESP_LOGD("espnow", "ALL_ON: Turning on relay 1");
+                    if (id(runtime_relay_1_coupled)) 
+                      id(relay_1).turn_on(); 
+                    else 
+                      id(dummy_relay_1).turn_on();
+                  }
+
+                  // Relay 2 (dacă există și nu e internal)
+                  if (${relay_count} >= 2) {
+                    bool current_state_2 = id(runtime_relay_2_coupled) ? 
+                                          id(relay_2).state : 
+                                          id(dummy_relay_2).state;
+                    if (!current_state_2) {
+                      ESP_LOGD("espnow", "ALL_ON: Turning on relay 2");
+                      if (id(runtime_relay_2_coupled)) 
+                        id(relay_2).turn_on(); 
+                      else 
+                        id(dummy_relay_2).turn_on();
+                    }
+                  }
+
+                  // Relay 3 (dacă există și nu e internal)
+                  if (${relay_count} >= 3) {
+                    bool current_state_3 = id(runtime_relay_3_coupled) ? 
+                                          id(relay_3).state : 
+                                          id(dummy_relay_3).state;
+                    if (!current_state_3) {
+                      ESP_LOGD("espnow", "ALL_ON: Turning on relay 3");
+                      if (id(runtime_relay_3_coupled)) 
+                        id(relay_3).turn_on(); 
+                      else 
+                        id(dummy_relay_3).turn_on();
+                    }
+                  }
                 }
+                
                 else if (msg == "ALL_OFF") {
-                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
-                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
-                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+                  // Relay 1
+                  bool current_state_1 = id(runtime_relay_1_coupled) ? 
+                                        id(relay_1).state : 
+                                        id(dummy_relay_1).state;
+                  if (current_state_1) {
+                    ESP_LOGD("espnow", "ALL_OFF: Turning off relay 1");
+                    if (id(runtime_relay_1_coupled)) 
+                      id(relay_1).turn_off(); 
+                    else 
+                      id(dummy_relay_1).turn_off();
+                  }
+
+                  // Relay 2 (dacă există și nu e internal)
+                  if (${relay_count} >= 2) {
+                    bool current_state_2 = id(runtime_relay_2_coupled) ? 
+                                          id(relay_2).state : 
+                                          id(dummy_relay_2).state;
+                    if (current_state_2) {
+                      ESP_LOGD("espnow", "ALL_OFF: Turning off relay 2");
+                      if (id(runtime_relay_2_coupled)) 
+                        id(relay_2).turn_off(); 
+                      else 
+                        id(dummy_relay_2).turn_off();
+                    }
+                  }
+
+                  // Relay 3 (dacă există și nu e internal)
+                  if (${relay_count} >= 3) {
+                    bool current_state_3 = id(runtime_relay_3_coupled) ? 
+                                          id(relay_3).state : 
+                                          id(dummy_relay_3).state;
+                    if (current_state_3) {
+                      ESP_LOGD("espnow", "ALL_OFF: Turning off relay 3");
+                      if (id(runtime_relay_3_coupled)) 
+                        id(relay_3).turn_off(); 
+                      else 
+                        id(dummy_relay_3).turn_off();
+                    }
+                  }
                 }
+                
                 else if (msg == "L1_ON") {
-                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+                  bool current_state = id(runtime_relay_1_coupled) ? 
+                                      id(relay_1).state : 
+                                      id(dummy_relay_1).state;
+                  if (!current_state) {
+                    ESP_LOGD("espnow", "L1_ON: Turning on relay 1 (current: %d)", current_state);
+                    if (id(runtime_relay_1_coupled)) 
+                      id(relay_1).turn_on(); 
+                    else 
+                      id(dummy_relay_1).turn_on();
+                  } else {
+                    ESP_LOGD("espnow", "L1_ON: Relay 1 already ON, skipping");
+                  }
                 }
+                
                 else if (msg == "L1_OFF") {
-                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+                  bool current_state = id(runtime_relay_1_coupled) ? 
+                                      id(relay_1).state : 
+                                      id(dummy_relay_1).state;
+                  if (current_state) {
+                    ESP_LOGD("espnow", "L1_OFF: Turning off relay 1 (current: %d)", current_state);
+                    if (id(runtime_relay_1_coupled)) 
+                      id(relay_1).turn_off(); 
+                    else 
+                      id(dummy_relay_1).turn_off();
+                  } else {
+                    ESP_LOGD("espnow", "L1_OFF: Relay 1 already OFF, skipping");
+                  }
                 }
+                
                 else if (msg == "L2_ON") {
-                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+                  bool current_state = id(runtime_relay_2_coupled) ? 
+                                      id(relay_2).state : 
+                                      id(dummy_relay_2).state;
+                  if (!current_state) {
+                    ESP_LOGD("espnow", "L2_ON: Turning on relay 2 (current: %d)", current_state);
+                    if (id(runtime_relay_2_coupled)) 
+                      id(relay_2).turn_on(); 
+                    else 
+                      id(dummy_relay_2).turn_on();
+                  } else {
+                    ESP_LOGD("espnow", "L2_ON: Relay 2 already ON, skipping");
+                  }
                 }
+                
                 else if (msg == "L2_OFF") {
-                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+                  bool current_state = id(runtime_relay_2_coupled) ? 
+                                      id(relay_2).state : 
+                                      id(dummy_relay_2).state;
+                  if (current_state) {
+                    ESP_LOGD("espnow", "L2_OFF: Turning off relay 2 (current: %d)", current_state);
+                    if (id(runtime_relay_2_coupled)) 
+                      id(relay_2).turn_off(); 
+                    else 
+                      id(dummy_relay_2).turn_off();
+                  } else {
+                    ESP_LOGD("espnow", "L2_OFF: Relay 2 already OFF, skipping");
+                  }
                 }
+                
                 else if (msg == "L3_ON") {
-                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+                  bool current_state = id(runtime_relay_3_coupled) ? 
+                                      id(relay_3).state : 
+                                      id(dummy_relay_3).state;
+                  if (!current_state) {
+                    ESP_LOGD("espnow", "L3_ON: Turning on relay 3 (current: %d)", current_state);
+                    if (id(runtime_relay_3_coupled)) 
+                      id(relay_3).turn_on(); 
+                    else 
+                      id(dummy_relay_3).turn_on();
+                  } else {
+                    ESP_LOGD("espnow", "L3_ON: Relay 3 already ON, skipping");
+                  }
                 }
+                
                 else if (msg == "L3_OFF") {
-                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+                  bool current_state = id(runtime_relay_3_coupled) ? 
+                                      id(relay_3).state : 
+                                      id(dummy_relay_3).state;
+                  if (current_state) {
+                    ESP_LOGD("espnow", "L3_OFF: Turning off relay 3 (current: %d)", current_state);
+                    if (id(runtime_relay_3_coupled)) 
+                      id(relay_3).turn_off(); 
+                    else 
+                      id(dummy_relay_3).turn_off();
+                  } else {
+                    ESP_LOGD("espnow", "L3_OFF: Relay 3 already OFF, skipping");
+                  }
                 }
-            - delay: 50ms
-            - lambda: |-
-                id(sync_enabled) = true;
-            - logger.log: "Sync enabled again after processing"
+                
+                else {
+                  ESP_LOGW("espnow", "Unknown message received: %s", msg.c_str());
+                }
+            - logger.log: "ESP-NOW message processing complete"
 
 
 external_components:
