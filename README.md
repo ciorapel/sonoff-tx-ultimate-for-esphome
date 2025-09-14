@@ -20,12 +20,14 @@ Proiect personalizat pentru **Sonoff TX**, bazat pe [SmartHome-yourself/sonoff-t
 - ⚙️ Optimizări C pentru apăsări scurte, prevenind pierderea evenimentelor de release  
 - 🔕 Dezactivarea vibrației separat de DND  
 - 💡 Indicatorii de aprindere au culoare și intensitate diferită în funcție de starea nightlight
-- ⚡ Adăugare sincronizare prin ESP-Now între întrerupătoare.
+- ⚡ Adăugare sincronizare prin ESP-Now între întrerupătoare (*)
 - 🧹 Filtrare completă a input-ului și detectare buton blocat  
 - 🖐️ Funcția **stuck touch** pentru gesturi ne-liniare (swipe incomplet sau revenire la punctul inițial)  
 - ⏱️ Generare automată a evenimentului de release după 500ms dacă nu este detectat  
 - 🔄 Gestionarea corectă a long touch-urilor și readucerea releului la starea inițială
 - ⚡ Adăugare posibilitate activare/dezactivare a releelor care să răspundă la multitouch
+
+ (*) în cazul automatizărilor care fac toggle la releele sincronizate, trebuie adăugate toate releele în automatizare, nu doar unul. Ex. dacă o automatizare pornește L1 și L2 pe switch-ul master, datorită funcției de prevenire a buclei de sincronizare, pe swich-ul slave se va primi comanda de pornire doar L1; pentru a preveni această situație, în automatizare se vor adăuga ambele relee, atât cel master cât și cel slave.
 
 ---
 
