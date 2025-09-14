@@ -1,6 +1,6 @@
 substitutions:
   name: intrerupator_default
-  friendly_name: "Intrerupator default"
+  friendly_name: "Intrerupator Default"
   relay_count: "3"
   relay_2_internal: "false"
   relay_3_internal: "false"
@@ -10,9 +10,13 @@ substitutions:
   relay_3_coupled: "true"
 
   sync_enabled: "false"
-  partner_mac: "30:c9:22:fd:f7:38"
+  partner_mac: "30:C9:22:FD:E6:B0"
 
   # Setări mai avansate - recomand atenție la modificare
+  l1_toggle_on_multitouch: "true"
+  l2_toggle_on_multitouch: "true"
+  l3_toggle_on_multitouch: "true"
+
   vibra_time: "150ms"
   button_on_time: "200ms"
 
@@ -71,7 +75,7 @@ esphome:
   friendly_name: ${friendly_name}
   project:
     name: smarthomeyourself-crpl.tx_ultimate
-    version: "2.2"
+    version: "2.3"
 
 
   on_boot:
@@ -158,15 +162,27 @@ espnow:
 
                 if (msg == "ALL_ON") {
                   ESP_LOGD("espnow", "ALL_ON received");
-                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
-                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
-                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+                  if (${l1_toggle_on_multitouch}) {
+                    if (id(runtime_relay_1_coupled)) id(relay_1).turn_on(); else id(dummy_relay_1).turn_on();
+                  }
+                  if (${l2_toggle_on_multitouch} && ${relay_count} >= 2 && !${relay_2_internal}) {
+                    if (id(runtime_relay_2_coupled)) id(relay_2).turn_on(); else id(dummy_relay_2).turn_on();
+                  }
+                  if (${l3_toggle_on_multitouch} && ${relay_count} >= 3 && !${relay_3_internal}) {
+                    if (id(runtime_relay_3_coupled)) id(relay_3).turn_on(); else id(dummy_relay_3).turn_on();
+                  }
                 }
                 else if (msg == "ALL_OFF") {
                   ESP_LOGD("espnow", "ALL_OFF received");
-                  if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
-                  if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
-                  if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+                  if (${l1_toggle_on_multitouch}) {
+                    if (id(runtime_relay_1_coupled)) id(relay_1).turn_off(); else id(dummy_relay_1).turn_off();
+                  }
+                  if (${l2_toggle_on_multitouch} && ${relay_count} >= 2 && !${relay_2_internal}) {
+                    if (id(runtime_relay_2_coupled)) id(relay_2).turn_off(); else id(dummy_relay_2).turn_off();
+                  }
+                  if (${l3_toggle_on_multitouch} && ${relay_count} >= 3 && !${relay_3_internal}) {
+                    if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
+                  }
                 }
                 else if (msg == "L1_ON") {
                   ESP_LOGD("espnow", "L1_ON received");
@@ -192,7 +208,7 @@ espnow:
                   ESP_LOGD("espnow", "L3_OFF received");
                   if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
                 }
-            - delay: 200ms
+            - delay: 100ms
             - binary_sensor.template.publish:
                 id: sync_enabled_bounce
                 state: OFF
@@ -909,20 +925,28 @@ tx_ultimate_touch:
         std::vector<bool> relay_states;
         std::vector<std::string> relay_names;
 
-        bool relay1_state = id(runtime_relay_1_coupled) ? id(relay_1).state : id(dummy_relay_1).state;
-        relay_states.push_back(relay1_state);
-        relay_names.push_back("relay_1");
+        if (${l1_toggle_on_multitouch}) {
+          bool relay1_state = id(runtime_relay_1_coupled) ? id(relay_1).state : id(dummy_relay_1).state;
+          relay_states.push_back(relay1_state);
+          relay_names.push_back("relay_1");
+        }
 
-        if (${relay_count} >= 2 && !${relay_2_internal}) {
+        if (${l2_toggle_on_multitouch} && ${relay_count} >= 2 && !${relay_2_internal}) {
           bool relay2_state = id(runtime_relay_2_coupled) ? id(relay_2).state : id(dummy_relay_2).state;
           relay_states.push_back(relay2_state);
           relay_names.push_back("relay_2");
         }
 
-        if (${relay_count} >= 3 && !${relay_3_internal}) {
+        if (${l3_toggle_on_multitouch} && ${relay_count} >= 3 && !${relay_3_internal}) {
           bool relay3_state = id(runtime_relay_3_coupled) ? id(relay_3).state : id(dummy_relay_3).state;
           relay_states.push_back(relay3_state);
           relay_names.push_back("relay_3");
+        }
+
+        if (relay_states.empty()) {
+          ESP_LOGD("multitouch", "Niciun releu nu are multitouch activat - multitouch ignorat");
+          id(multitouch_action_turn_on) = false;
+          return;
         }
 
         bool all_on = true;
@@ -933,7 +957,7 @@ tx_ultimate_touch:
           if (state) any_on = true;
         }
 
-        ESP_LOGD("multitouch", "Found %d non-internal relays, all_on: %d, any_on: %d",
+        ESP_LOGD("multitouch", "Found %d relays with multitouch enabled, all_on: %d, any_on: %d",
                  relay_states.size(), all_on, any_on);
 
         id(multitouch_action_turn_on) = !all_on;
@@ -955,25 +979,28 @@ tx_ultimate_touch:
                 - espnow.send:
                     address: ${partner_mac}
                     data: "ALL_OFF"
-
+    
     - if:
         condition:
           lambda: "return id(multitouch_action_turn_on);"
         then:
-          - logger.log: "MultiTouch: Aprind toate releele non-interne"
+          - logger.log: "MultiTouch: Aprind releele cu multitouch activat"
 
           - if:
               condition:
-                lambda: "return id(runtime_relay_1_coupled);"
+                lambda: "return ${l1_toggle_on_multitouch};"
               then:
-                - switch.turn_on: relay_1
-              else:
-                - switch.turn_on: dummy_relay_1
+                - if:
+                    condition:
+                      lambda: "return id(runtime_relay_1_coupled);"
+                    then:
+                      - switch.turn_on: relay_1
+                    else:
+                      - switch.turn_on: dummy_relay_1
 
           - if:
               condition:
-                lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
-
+                lambda: "return ${relay_count} >= 2 && !${relay_2_internal} && ${l2_toggle_on_multitouch};"
               then:
                 - if:
                     condition:
@@ -985,7 +1012,7 @@ tx_ultimate_touch:
 
           - if:
               condition:
-                lambda: "return ${relay_count} >= 3 && !${relay_3_internal};"
+                lambda: "return ${relay_count} >= 3 && !${relay_3_internal} && ${l3_toggle_on_multitouch};"
               then:
                 - if:
                     condition:
@@ -995,20 +1022,23 @@ tx_ultimate_touch:
                     else:
                       - switch.turn_on: dummy_relay_3
         else:
-          - logger.log: "MultiTouch: Sting toate releele non-interne"
+          - logger.log: "MultiTouch: Sting releele cu multitouch activat"
 
           - if:
               condition:
-                lambda: "return id(runtime_relay_1_coupled);"
+                lambda: "return ${l1_toggle_on_multitouch};"
               then:
-                - switch.turn_off: relay_1
-              else:
-                - switch.turn_off: dummy_relay_1
+                - if:
+                    condition:
+                      lambda: "return id(runtime_relay_1_coupled);"
+                    then:
+                      - switch.turn_off: relay_1
+                    else:
+                      - switch.turn_off: dummy_relay_1
 
           - if:
               condition:
-                lambda: "return ${relay_count} >= 2 && !${relay_2_internal};"
-
+                lambda: "return ${relay_count} >= 2 && !${relay_2_internal} && ${l2_toggle_on_multitouch};"
               then:
                 - if:
                     condition:
@@ -1020,7 +1050,7 @@ tx_ultimate_touch:
 
           - if:
               condition:
-                lambda: "return ${relay_count} >= 3 && !${relay_3_internal};"
+                lambda: "return ${l3_toggle_on_multitouch} && ${relay_count} >= 3 && !${relay_3_internal};"
               then:
                 - if:
                     condition:

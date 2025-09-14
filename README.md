@@ -24,7 +24,8 @@ Proiect personalizat pentru **Sonoff TX**, bazat pe [SmartHome-yourself/sonoff-t
 - 🧹 Filtrare completă a input-ului și detectare buton blocat  
 - 🖐️ Funcția **stuck touch** pentru gesturi ne-liniare (swipe incomplet sau revenire la punctul inițial)  
 - ⏱️ Generare automată a evenimentului de release după 500ms dacă nu este detectat  
-- 🔄 Gestionarea corectă a long touch-urilor și readucerea releului la starea inițială  
+- 🔄 Gestionarea corectă a long touch-urilor și readucerea releului la starea inițială
+- ⚡ Adăugare posibilitate activare/dezactivare a releelor care să răspundă la multitouch
 
 ---
 
@@ -59,7 +60,7 @@ substitutions:
   relay_3_coupled: "true"
 
   sync_enabled: "false"
-  partner_mac: "30:C9:22:FD:F7:7C"
+  partner_mac: "30:C9:22:FD:E6:B0"
 
 packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
