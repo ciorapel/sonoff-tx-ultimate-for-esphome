@@ -53,9 +53,7 @@ Permite folosirea touch-ului independent de releele interne.
 substitutions:
   name: nume_intrerupator
   friendly_name: "Nume intrerupator"
-  relay_count: "2" # numărul de poziții ale întrerupătorului
-  relay_2_internal: "false" # setează ”true” dacă întrerupătorul are doar o poziție
-  relay_3_internal: "true" # setează ”true” dacă întrerupătorul are doar două poziții
+  relay_count: "3" # numărul de poziții ale întrerupătorului
                             
   relay_1_coupled: "true" # true = normal, false = decuplat
   relay_2_coupled: "true"

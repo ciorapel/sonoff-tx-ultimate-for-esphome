@@ -2,8 +2,6 @@ substitutions:
   name: intrerupator_default
   friendly_name: "Intrerupator Default"
   relay_count: "3"
-  relay_2_internal: "false"
-  relay_3_internal: "false"
                             
   relay_1_coupled: "true"
   relay_2_coupled: "true"
@@ -49,6 +47,8 @@ substitutions:
   swipe_right_color: "{100,70,0}"
   swipe_right_effect: "Pulse"
 
+  relay_2_internal: "false"
+  relay_3_internal: "false"
 # Setari hardware - nu modifica dacă nu știi ce faci
 
   relay_1_pin: GPIO18
@@ -81,6 +81,7 @@ esphome:
   on_boot:
     priority: -100
     then:
+      - script.execute: configure_relay_internal_states
       - binary_sensor.template.publish:
           id: touchfield_1
           state: OFF
@@ -226,6 +227,10 @@ preferences:
   flash_write_interval: 5min
 
 globals:
+  - id: relay_count_int
+    type: int
+    restore_value: false
+    initial_value: '${relay_count}'
   - id: sync_enabled
     type: bool
     restore_value: no
@@ -1082,6 +1087,21 @@ tx_ultimate_touch:
         ESP_LOGD("tx_ultimate_touch.on_long_touch_release", "Long Touch Release Position: %d / State: %d", touch.x, touch.state);
 
 script:
+  - id: configure_relay_internal_states
+    mode: restart
+    then:
+      - lambda: |-
+          // Override internal state bazat pe relay_count
+          if (id(relay_count_int) <= 1) {
+            id(touchfield_2).set_internal(true);
+            id(relay_2).set_internal(true);
+            id(dummy_relay_2).set_internal(true);
+          }
+          if (id(relay_count_int) <= 2) {
+            id(touchfield_3).set_internal(true);
+            id(relay_3).set_internal(true);
+            id(dummy_relay_3).set_internal(true);
+          }
   - id: update_button_settings
     mode: single
     then:

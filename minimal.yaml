@@ -1,16 +1,14 @@
 substitutions:
   name: nume_intrerupator
   friendly_name: "Nume intrerupator"
-  relay_count: "2" # numărul de poziții ale întrerupătorului
-  relay_2_internal: "false" # setează ”true” dacă întrerupătorul are doar o poziție
-  relay_3_internal: "true" # setează ”true” dacă întrerupătorul are doar două poziții
+  relay_count: "3" # numărul de poziții ale întrerupătorului
                             
   relay_1_coupled: "true" # true = normal, false = decuplat
   relay_2_coupled: "true"
   relay_3_coupled: "true"
 
   sync_enabled: "false"
-  partner_mac: "30:C9:22:FD:F7:7C"
+  partner_mac: "30:C9:22:FD:E6:B0"
 
 packages:
   smarthomeyourself-crpl.tx-ultimate: github://ciorapel/sonoff-tx-ultimate-for-esphome/tx_ultimate.yaml@main
