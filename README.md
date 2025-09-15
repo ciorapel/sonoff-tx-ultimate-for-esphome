@@ -1,3 +1,7 @@
+#### Choose language:
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome/blob/main/README.en.md) 
+[![ro](https://img.shields.io/badge/lang-ro-yellow.svg)](https://github.com/ciorapel/sonoff-tx-ultimate-for-esphome/blob/main/README.md)
+
 # ⚡ Sonoff TX Ultimate Custom Firmware
 
 Proiect personalizat pentru **Sonoff TX**, bazat pe [SmartHome-yourself/sonoff-tx-ultimate-for-esphome](https://github.com/SmartHome-yourself/sonoff-tx-ultimate-for-esphome).
@@ -8,7 +12,7 @@ Proiect personalizat pentru **Sonoff TX**, bazat pe [SmartHome-yourself/sonoff-t
 
 - ⚡ Migrare completă de la **Arduino** la **ESP-IDF**  
 - 🌙 Eliminarea nightlight-ului automat bazat pe geolocație hardcodată  
-- 👀 Variabile pentru ascunderea butoanelor în Home Assistant pentru întrerupătoarele cu mai puțin de 3 poziții  
+- 👀 Ascunderea entităților automat în Home Assistant pentru întrerupătoarele cu mai puțin de 3 poziții  
 - 🐛 Corectarea bug-ului de toggle nightlight la fiecare restart  
 - 🌈 Efecte suplimentare pentru **NeoPixel** și reorganizarea poziționării acestora  
 - 🎨 Ajustarea culorilor și intensităților pentru butoane și nightlight  
@@ -75,11 +79,10 @@ sync_enabled: "true"  # activează sincronizarea
 partner_mac: "AA:BB:CC:DD:EE:FF"  # MAC-ul întrerupătorului pereche
 ```
 
-### 🔄 Cum funcționează sincronizarea
+### 🔄 Cum funcționează decuplarea
 
 - **Coupled true**: touch-ul controlează direct releul fizic care apare în HA și cele dummy nu apar
 - **Coupled false**: touch-ul controlează doar dummy relay care acum sunt vizibile în HA, releul fizic rămâne independent și accesibil și el din HA
-- **Internal true**: butonul nu apare în HA (pentru întrerupătoare cu mai puține poziții)
 
 ### 💡 Exemplu practic
 
