@@ -2,7 +2,7 @@ substitutions:
   name: intrerupator_default
   friendly_name: "Intrerupator Default"
   relay_count: "3"
-                            
+
   relay_1_coupled: "true"
   relay_2_coupled: "true"
   relay_3_coupled: "true"
@@ -209,7 +209,6 @@ espnow:
                   ESP_LOGD("espnow", "L3_OFF received");
                   if (id(runtime_relay_3_coupled)) id(relay_3).turn_off(); else id(dummy_relay_3).turn_off();
                 }
-            - delay: 100ms
             - binary_sensor.template.publish:
                 id: sync_enabled_bounce
                 state: OFF
@@ -984,7 +983,9 @@ tx_ultimate_touch:
                 - espnow.send:
                     address: ${partner_mac}
                     data: "ALL_OFF"
-    
+    - binary_sensor.template.publish:
+        id: sync_enabled_bounce
+        state: ON
     - if:
         condition:
           lambda: "return id(multitouch_action_turn_on);"
@@ -1064,7 +1065,9 @@ tx_ultimate_touch:
                       - switch.turn_off: relay_3
                     else:
                       - switch.turn_off: dummy_relay_3
-
+    - binary_sensor.template.publish:
+        id: sync_enabled_bounce
+        state: OFF
     - lambda: >
         ESP_LOGD("tx_ultimate_touch.on_full_touch_release", "Full Touch Release Position: %d / State: %d", touch.x, touch.state);
 

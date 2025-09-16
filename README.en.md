@@ -24,14 +24,12 @@ Custom project for **Sonoff TX**, based on [SmartHome-yourself/sonoff-tx-ultimat
 - ⚙️ C optimizations for short presses, preventing loss of release events  
 - 🔕 Vibration deactivation separate from DND  
 - 💡 The light indicators have different colors and intensities depending on the nightlight status
-- ⚡ Add ESP-Now synchronization between switches (*)
+- ⚡ Add ESP-Now synchronization between switches
 - 🧹 Full input filtering and stuck button detection
 - 🖐️ **Stuck touch** function for non-linear gestures (incomplete swipe or return to the starting point)  
 - ⏱️ Automatic generation of the release event after 500ms if not detected  
 - 🔄 Correct management of long touches and return of the relay to its initial state
 - ⚡ Add option to enable/disable relays that respond to multitouch
-
-(*) in the case of automations that toggle synchronized relays, all relays must be added to the automation, not just one. I.e. if an automation turns on L1 and L2 on the master switch, due to the synchronization loop prevention function, only L1 will receive the start command on the slave switch; to prevent this situation, both relays master and slave, will be added to the automation.
 
 ---
 
